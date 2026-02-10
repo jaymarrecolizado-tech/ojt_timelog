@@ -67,7 +67,7 @@ class User(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.STUDENT)
+    role = Column(String(20), nullable=False, default="student")
     is_active = Column(Boolean, nullable=False, default=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -105,7 +105,7 @@ class Student(Base):
     ojt_end = Column(Date)
     required_hours = Column(DECIMAL(7, 2), nullable=False, default=500.00)
     contact_no = Column(String(20))
-    status = Column(Enum(StudentStatus), nullable=False, default=StudentStatus.ACTIVE)
+    status = Column(String(20), nullable=False, default="active")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
@@ -238,3 +238,18 @@ class RefreshToken(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     user = relationship("User", back_populates="refresh_tokens")
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id = Column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    token_hash = Column(String(64), unique=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    user = relationship("User")

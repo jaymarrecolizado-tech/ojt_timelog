@@ -5,6 +5,7 @@ from sqlalchemy import select, func, and_
 from ...core.database import get_db
 from ...models.models import User, Student, TimeLog, LogOverride
 from ...schemas import LogOverrideRequest, ManualEntryRequest
+from ...utils.time_calc import calculate_hours_for_day
 from .auth import get_current_user, require_role
 
 router = APIRouter()
@@ -34,7 +35,17 @@ async def get_today_logs(
         .where(TimeLog.student_id == target_student_id, TimeLog.date == today)
         .order_by(TimeLog.timestamp)
     )
-    logs = result.scalars().all()
+    logs = list(result.scalars().all())
+
+    hours_today, _ = calculate_hours_for_day(logs)
+
+    status_map = {
+        0: "Not clocked in",
+        1: "Clocked In (AM)",
+        2: "Clocked Out (AM)",
+        3: "Clocked In (PM)",
+        4: "Done for the day",
+    }
 
     return {
         "success": True,
@@ -50,9 +61,9 @@ async def get_today_logs(
                 }
                 for log in logs
             ],
-            "hours_today": 0,
+            "hours_today": hours_today,
             "scans_remaining": 4 - len(logs),
-            "current_status": f"{len(logs)} scans today",
+            "current_status": status_map.get(len(logs), "Done for the day"),
         },
     }
 
@@ -90,40 +101,30 @@ async def get_logs_range(
     )
     logs = result.scalars().all()
 
-    days_dict = {}
+    logs_by_date = {}
     for log in logs:
-        if log.date not in days_dict:
-            days_dict[log.date] = {
-                "am_in": None,
-                "am_out": None,
-                "pm_in": None,
-                "pm_out": None,
-            }
-        key = f"{log.log_category.lower()}_{log.log_type.lower()}"
-        days_dict[log.date][key] = log.timestamp.strftime("%I:%M")
+        if log.date not in logs_by_date:
+            logs_by_date[log.date] = []
+        logs_by_date[log.date].append(log)
 
     days = []
     current = from_date
     while current <= to_date:
-        day_data = days_dict.get(
-            current, {"am_in": None, "am_out": None, "pm_in": None, "pm_out": None}
-        )
+        day_logs = logs_by_date.get(current, [])
         day_name = current.strftime("%A")
 
-        status = "ABSENT"
-        hours = 0
-
-        if day_data["am_in"] and day_data["am_out"]:
-            hours += 4
-        if day_data["pm_in"] and day_data["pm_out"]:
-            hours += 4
-
-        if any(day_data.values()):
-            status = "COMPLETE" if hours == 8 else "INCOMPLETE"
-        elif current.weekday() == 5:
-            status = "SATURDAY"
-        elif current.weekday() == 6:
-            status = "SUNDAY"
+        if day_logs:
+            hours, day_data = calculate_hours_for_day(day_logs)
+            status = "COMPLETE" if hours >= 7.5 else "INCOMPLETE"
+        else:
+            hours = 0
+            day_data = {"am_in": None, "am_out": None, "pm_in": None, "pm_out": None}
+            if current.weekday() == 5:
+                status = "SATURDAY"
+            elif current.weekday() == 6:
+                status = "SUNDAY"
+            else:
+                status = "ABSENT"
 
         days.append(
             {

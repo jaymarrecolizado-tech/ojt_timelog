@@ -5,7 +5,9 @@ from sqlalchemy import select, func
 from ...core.database import get_db
 from ...models.models import User, Student, TimeLog, SystemSetting, Holiday, Location
 from ...schemas import StudentUpdate, SystemSettingUpdate, HolidayCreate, LocationCreate
+from ...utils.time_calc import is_late
 from .auth import require_role
+from ...models.models import LogOverride, ActivityLog
 
 router = APIRouter()
 
@@ -16,7 +18,7 @@ async def get_live_dashboard(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(func.count()).select_from(Student))
-    total_students = result.scalar()
+    total_students = result.scalar() or 0
 
     today = date.today()
     result = await db.execute(
@@ -24,15 +26,41 @@ async def get_live_dashboard(
             TimeLog.date == today
         )
     )
-    present_today = result.scalar()
+    present_today = result.scalar() or 0
+
+    result = await db.execute(
+        select(SystemSetting).where(SystemSetting.setting_key == "grace_period_minutes")
+    )
+    grace_setting = result.scalar_one_or_none()
+    grace_minutes = int(grace_setting.setting_value) if grace_setting else 15
+
+    result = await db.execute(
+        select(SystemSetting).where(SystemSetting.setting_key == "schedule_am_start")
+    )
+    schedule_setting = result.scalar_one_or_none()
+    schedule_start = schedule_setting.setting_value if schedule_setting else "08:00"
+
+    result = await db.execute(
+        select(TimeLog).where(
+            TimeLog.date == today,
+            TimeLog.log_type == "IN",
+            TimeLog.log_category == "AM",
+        )
+    )
+    am_ins = result.scalars().all()
+
+    late_count = 0
+    for log in am_ins:
+        if is_late(log.timestamp, schedule_start, grace_minutes):
+            late_count += 1
 
     return {
         "success": True,
         "data": {
             "total_students": total_students,
             "present_today": present_today,
-            "absent_today": total_students - present_today,
-            "late_today": 0,
+            "absent_today": max(0, total_students - present_today),
+            "late_today": late_count,
         },
     }
 
@@ -255,3 +283,205 @@ async def create_location(
         "message": "Location created",
         "data": {"id": str(location.id)},
     }
+
+
+@router.get("/holidays")
+async def list_holidays(
+    user: User = Depends(require_role(["admin", "super_admin"])),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Holiday).order_by(Holiday.date))
+    holidays = result.scalars().all()
+
+    return {
+        "success": True,
+        "data": [
+            {
+                "id": str(h.id),
+                "date": h.date.isoformat(),
+                "name": h.name,
+                "type": h.type,
+                "is_recurring": h.is_recurring,
+            }
+            for h in holidays
+        ],
+    }
+
+
+@router.get("/dashboard/clocked-in")
+async def get_clocked_in_students(
+    user: User = Depends(require_role(["admin", "super_admin"])),
+    db: AsyncSession = Depends(get_db),
+):
+    today = date.today()
+
+    result = await db.execute(
+        select(TimeLog)
+        .where(TimeLog.date == today, TimeLog.log_type == "IN")
+        .order_by(TimeLog.timestamp.desc())
+    )
+    all_ins = result.scalars().all()
+
+    result = await db.execute(
+        select(TimeLog).where(TimeLog.date == today, TimeLog.log_type == "OUT")
+    )
+    all_outs = result.scalars().all()
+
+    out_students = {log.student_id for log in all_outs}
+
+    clocked_in = []
+    seen = set()
+    for log in all_ins:
+        if log.student_id in out_students or log.student_id in seen:
+            continue
+        seen.add(log.student_id)
+
+        result = await db.execute(select(Student).where(Student.id == log.student_id))
+        student = result.scalar_one_or_none()
+        if student:
+            clocked_in.append(
+                {
+                    "student_id": str(student.id),
+                    "student_id_no": student.student_id_no,
+                    "name": f"{student.first_name} {student.last_name}",
+                    "department": student.department,
+                    "clocked_in_at": log.timestamp.strftime("%I:%M %p"),
+                    "category": log.log_category,
+                }
+            )
+
+    return {
+        "success": True,
+        "data": {
+            "count": len(clocked_in),
+            "students": clocked_in,
+        },
+    }
+
+
+@router.get("/audit-trail")
+async def get_audit_trail(
+    page: int = 1,
+    limit: int = 50,
+    user: User = Depends(require_role(["admin", "super_admin"])),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(LogOverride)
+        .order_by(LogOverride.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    overrides = result.scalars().all()
+
+    audit_entries = []
+    for o in overrides:
+        student_result = await db.execute(
+            select(Student).where(Student.id == o.student_id)
+        )
+        student = student_result.scalar_one_or_none()
+
+        admin_result = await db.execute(select(User).where(User.id == o.admin_id))
+        admin = admin_result.scalar_one_or_none()
+
+        audit_entries.append(
+            {
+                "id": str(o.id),
+                "action": o.action,
+                "student_name": f"{student.first_name} {student.last_name}"
+                if student
+                else "Unknown",
+                "admin_email": admin.email if admin else "Unknown",
+                "old_values": o.old_values,
+                "new_values": o.new_values,
+                "reason": o.reason,
+                "created_at": o.created_at.isoformat(),
+            }
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "entries": audit_entries,
+            "page": page,
+            "limit": limit,
+        },
+    }
+
+
+@router.post("/users/guard")
+async def create_guard(
+    email: str,
+    password: str,
+    user: User = Depends(require_role(["admin", "super_admin"])),
+    db: AsyncSession = Depends(get_db),
+):
+    from ...core.security import get_password_hash
+
+    result = await db.execute(select(User).where(User.email == email))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    guard = User(
+        email=email,
+        password_hash=get_password_hash(password),
+        role="guard",
+    )
+    db.add(guard)
+    await db.commit()
+    await db.refresh(guard)
+
+    return {
+        "success": True,
+        "message": "Guard account created",
+        "data": {"id": str(guard.id), "email": guard.email},
+    }
+
+
+@router.get("/users")
+async def list_users(
+    role: str = None,
+    user: User = Depends(require_role(["admin", "super_admin"])),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(User)
+    if role:
+        query = query.where(User.role == role)
+
+    result = await db.execute(query)
+    users = result.scalars().all()
+
+    return {
+        "success": True,
+        "data": [
+            {
+                "id": str(u.id),
+                "email": u.email,
+                "role": u.role,
+                "is_active": u.is_active,
+                "created_at": u.created_at.isoformat(),
+            }
+            for u in users
+        ],
+    }
+
+
+@router.patch("/users/{user_id}/deactivate")
+async def deactivate_user(
+    user_id: str,
+    current_user: User = Depends(require_role(["admin", "super_admin"])),
+    db: AsyncSession = Depends(get_db),
+):
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    target_user = result.scalar_one_or_none()
+
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    target_user.is_active = False
+    await db.commit()
+
+    return {"success": True, "message": "User deactivated"}

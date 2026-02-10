@@ -89,3 +89,83 @@ export interface RegisterData {
   program: string
   contact_no?: string
 }
+
+export interface AdminDashboardStats {
+  total_students: number
+  present_today: number
+  absent_today: number
+  late_today: number
+}
+
+export interface StudentSummary {
+  student_id_no: string
+  name: string
+  department: string
+  monthly_hours: number
+  accumulated_hours: number
+  required_hours: number
+  completion: string
+  days_present: number
+  days_absent: number
+  status: string
+}
+
+export interface ReportSummary {
+  period: string
+  students: StudentSummary[]
+}
+
+export interface SystemSettings {
+  qr_rotation_seconds: string
+  max_scans_per_day: string
+  grace_period_minutes: string
+  schedule_am_start: string
+  schedule_am_end: string
+  schedule_pm_start: string
+  schedule_pm_end: string
+  geolocation_required: string
+  geolocation_max_distance: string
+  scan_debounce_seconds: string
+}
+
+export interface Holiday {
+  id: string
+  date: string
+  name: string
+  type: string
+  is_recurring: boolean
+}
+
+export interface Location {
+  id: string
+  name: string
+  description?: string
+  is_active: boolean
+}
+
+export interface StudentDetail {
+  id: string
+  student_id_no: string
+  first_name: string
+  middle_name?: string
+  last_name: string
+  department: string
+  program: string
+  company?: string
+  ojt_start?: string
+  ojt_end?: string
+  required_hours: number
+  status: string
+}
+
+export interface ManualEntry {
+  log_type: 'IN' | 'OUT'
+  log_category: 'AM' | 'PM'
+  time: string
+}
+
+export interface LogOverride {
+  action: string
+  new_values: Record<string, unknown>
+  reason: string
+}

@@ -1,24 +1,38 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { Clock, Camera, FileText, Calendar, LogOut } from 'lucide-react'
+import { Clock, Camera, FileText, Calendar, LogOut, User, TrendingUp } from 'lucide-react'
 import api from '@/lib/api'
 import type { TodaySummary } from '@/types'
+
+interface HoursSummary {
+  accumulated_hours: number
+  required_hours: number
+  remaining_hours: number
+  completion_percentage: number
+}
 
 export default function StudentDashboard() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [todayData, setTodayData] = useState<TodaySummary | null>(null)
+  const [hoursSummary, setHoursSummary] = useState<HoursSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchTodayData()
+    fetchData()
   }, [])
 
-  const fetchTodayData = async () => {
+  const fetchData = async () => {
     try {
-      const { data } = await api.get('/logs/today')
-      setTodayData(data.data)
+      const [todayRes, dtrRes] = await Promise.all([
+        api.get('/logs/today'),
+        api.get(`/reports/dtr?month=${new Date().getMonth() + 1}&year=${new Date().getFullYear()}`)
+      ])
+      setTodayData(todayRes.data.data)
+      if (dtrRes.data.data?.totals) {
+        setHoursSummary(dtrRes.data.data.totals)
+      }
     } catch (err) {
       console.error(err)
     } finally {
@@ -50,7 +64,9 @@ export default function StudentDashboard() {
           <span className="font-semibold">OJT TLMS</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm">{user?.student?.first_name}</span>
+          <Link to="/student/profile" className="text-text-secondary hover:text-primary">
+            <User size={20} />
+          </Link>
           <button onClick={handleLogout} className="text-text-secondary hover:text-danger">
             <LogOut size={20} />
           </button>
@@ -91,6 +107,28 @@ export default function StudentDashboard() {
             Hours today: <span className="font-semibold">{todayData?.hours_today || 0}</span>
           </div>
         </div>
+
+        {hoursSummary && (
+          <div className="bg-surface rounded-lg shadow-md p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <TrendingUp size={16} />
+                OJT Progress
+              </h3>
+              <span className="text-primary font-bold">{hoursSummary.completion_percentage}%</span>
+            </div>
+            <div className="w-full h-3 bg-background rounded-full overflow-hidden mb-3">
+              <div
+                className="h-full bg-primary rounded-full transition-all"
+                style={{ width: `${Math.min(hoursSummary.completion_percentage, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-text-secondary">
+              <span>{hoursSummary.accumulated_hours} hrs done</span>
+              <span>{hoursSummary.remaining_hours} hrs remaining</span>
+            </div>
+          </div>
+        )}
         
         <Link to="/student/scan" className="block">
           <button className="w-full bg-primary text-white py-4 rounded-lg text-lg font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
@@ -108,10 +146,10 @@ export default function StudentDashboard() {
             <FileText className="mx-auto mb-1 text-primary" size={24} />
             <span className="text-sm">DTR</span>
           </Link>
-          <div className="bg-surface rounded-lg p-4 text-center">
-            <Clock className="mx-auto mb-1 text-primary" size={24} />
-            <span className="text-sm">Hours</span>
-          </div>
+          <Link to="/student/profile" className="bg-surface rounded-lg p-4 text-center hover:shadow-md transition-shadow">
+            <User className="mx-auto mb-1 text-primary" size={24} />
+            <span className="text-sm">Profile</span>
+          </Link>
         </div>
       </main>
     </div>

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, LogOut } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
-import { useNavigate } from 'react-router-dom'
+import { Search, Eye } from 'lucide-react'
+import AdminLayout from '@/components/AdminLayout'
 import api from '@/lib/api'
 
 interface Student {
@@ -15,8 +14,6 @@ interface Student {
 }
 
 export default function AdminStudents() {
-  const { logout } = useAuth()
-  const navigate = useNavigate()
   const [students, setStudents] = useState<Student[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -37,50 +34,31 @@ export default function AdminStudents() {
     }
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
-
   const filtered = students.filter(s => 
     s.full_name.toLowerCase().includes(search.toLowerCase()) ||
     s.student_id_no.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-surface shadow-sm px-4 py-3 flex justify-between items-center">
-        <h1 className="font-semibold">Students</h1>
-        <button onClick={handleLogout} className="text-text-secondary hover:text-danger">
-          <LogOut size={20} />
-        </button>
-      </header>
-      
-      <nav className="bg-surface border-b border-border px-4 py-2 flex gap-4 text-sm">
-        <Link to="/admin/dashboard" className="text-text-secondary hover:text-primary">Dashboard</Link>
-        <Link to="/admin/students" className="text-primary font-medium">Students</Link>
-        <Link to="/admin/reports" className="text-text-secondary hover:text-primary">Reports</Link>
-        <Link to="/admin/settings" className="text-text-secondary hover:text-primary">Settings</Link>
-      </nav>
-      
-      <main className="p-4 max-w-4xl mx-auto">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
-            <input
-              type="text"
-              placeholder="Search by name or ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+    <AdminLayout title="Students">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+          <input
+            type="text"
+            placeholder="Search by name or ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          />
         </div>
-        
-        {loading ? (
-          <div className="text-center py-8">Loading...</div>
-        ) : (
-          <div className="bg-surface rounded-lg shadow-md overflow-hidden">
+      </div>
+      
+      {loading ? (
+        <div className="text-center py-8">Loading...</div>
+      ) : (
+        <div className="bg-surface rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-background">
                 <tr>
@@ -89,13 +67,14 @@ export default function AdminStudents() {
                   <th className="px-4 py-3 text-left">Department</th>
                   <th className="px-4 py-3 text-left">Company</th>
                   <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((student) => (
                   <tr key={student.id} className="border-t border-border hover:bg-background">
-                    <td className="px-4 py-3 font-medium">{student.student_id_no}</td>
-                    <td className="px-4 py-3">{student.full_name}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{student.student_id_no}</td>
+                    <td className="px-4 py-3 font-medium">{student.full_name}</td>
                     <td className="px-4 py-3">{student.department}</td>
                     <td className="px-4 py-3">{student.company || '-'}</td>
                     <td className="px-4 py-3">
@@ -107,19 +86,28 @@ export default function AdminStudents() {
                         {student.status}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <Link
+                        to={`/admin/students/${student.student_id_no}`}
+                        className="text-primary hover:bg-primary/10 p-1 rounded inline-block"
+                        title="View Details"
+                      >
+                        <Eye size={18} />
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            
-            {filtered.length === 0 && (
-              <div className="text-center py-8 text-text-secondary">
-                No students found
-              </div>
-            )}
           </div>
-        )}
-      </main>
-    </div>
+          
+          {filtered.length === 0 && (
+            <div className="text-center py-8 text-text-secondary">
+              No students found
+            </div>
+          )}
+        </div>
+      )}
+    </AdminLayout>
   )
 }

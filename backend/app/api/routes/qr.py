@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import math
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -10,6 +11,22 @@ from ...utils.hash import hash_token
 from .auth import get_current_user, require_role
 
 router = APIRouter()
+
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    R = 6371000
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c
 
 
 @router.get("/current", response_model=dict)
@@ -76,6 +93,39 @@ async def validate_qr(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired QR code"
         )
+
+    result = await db.execute(
+        select(SystemSetting).where(SystemSetting.setting_key == "geolocation_required")
+    )
+    geolocation_setting = result.scalar_one_or_none()
+    geolocation_required = (
+        geolocation_setting and geolocation_setting.setting_value.lower() == "true"
+    )
+
+    if geolocation_required and payload.latitude and payload.longitude:
+        if location.latitude and location.longitude:
+            result = await db.execute(
+                select(SystemSetting).where(
+                    SystemSetting.setting_key == "geolocation_max_distance"
+                )
+            )
+            distance_setting = result.scalar_one_or_none()
+            max_distance = (
+                int(distance_setting.setting_value) if distance_setting else 200
+            )
+
+            distance = calculate_distance(
+                float(payload.latitude),
+                float(payload.longitude),
+                float(location.latitude),
+                float(location.longitude),
+            )
+
+            if distance > max_distance:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"You are too far from the OJT site ({int(distance)}m away)",
+                )
 
     today = date.today()
     now = datetime.utcnow()

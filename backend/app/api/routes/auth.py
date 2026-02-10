@@ -11,9 +11,21 @@ from ...core.security import (
     verify_password,
     get_password_hash,
 )
-from ...models.models import User, Student, RefreshToken
+from ...models.models import User, Student, RefreshToken, PasswordResetToken
 from ...schemas import UserCreate, UserLogin, UserResponse, TokenResponse, StudentCreate
 from ...utils.hash import hash_token
+import secrets
+from pydantic import BaseModel
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 
 router = APIRouter()
 security = HTTPBearer()
@@ -226,3 +238,96 @@ async def get_me(
             }
 
     return {"success": True, "data": response}
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.email == request.email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        return {
+            "success": True,
+            "message": "If the email exists, a reset link will be sent",
+        }
+
+    await db.execute(
+        select(PasswordResetToken).where(PasswordResetToken.user_id == user.id)
+    )
+    existing_tokens = (
+        (
+            await db.execute(
+                select(PasswordResetToken).where(PasswordResetToken.user_id == user.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for t in existing_tokens:
+        t.used = True
+
+    reset_token = secrets.token_urlsafe(32)
+    reset_token_record = PasswordResetToken(
+        user_id=user.id,
+        token_hash=hash_token(reset_token),
+        expires_at=datetime.utcnow() + timedelta(hours=1),
+    )
+    db.add(reset_token_record)
+    await db.commit()
+
+    return {
+        "success": True,
+        "message": "If the email exists, a reset link will be sent",
+        "debug_token": reset_token,
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(
+    request: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    token_hash = hash_token(request.token)
+
+    result = await db.execute(
+        select(PasswordResetToken).where(PasswordResetToken.token_hash == token_hash)
+    )
+    token_record = result.scalar_one_or_none()
+
+    if (
+        not token_record
+        or token_record.used
+        or token_record.expires_at < datetime.utcnow()
+    ):
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    result = await db.execute(select(User).where(User.id == token_record.user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+
+    user.password_hash = get_password_hash(request.new_password)
+    token_record.used = True
+    await db.commit()
+
+    return {"success": True, "message": "Password reset successfully"}
+
+
+@router.post("/change-password")
+async def change_password(
+    current_password: str,
+    new_password: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    user.password_hash = get_password_hash(new_password)
+    await db.commit()
+
+    return {"success": True, "message": "Password changed successfully"}

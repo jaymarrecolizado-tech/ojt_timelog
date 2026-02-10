@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ojt_timelog
+      MYSQL_USER: ${DB_USER:-ojt_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-ojt_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: mysql+aiomysql://${DB_USER:-ojt_user}:${DB_PASSWORD:-ojt_password}@db:3306/ojt_timelog
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      QR_SECRET_KEY: ${QR_SECRET_KEY:-change-this-in-production}
+      QR_ROTATION_SECONDS: 30
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      DEBUG: ${DEBUG:-false}
+      APP_NAME: OJT Time Log Management System
+      APP_VERSION: "1.0.0"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

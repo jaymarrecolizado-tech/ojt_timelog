@@ -1,12 +1,42 @@
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from typing import List
+from typing import List, Dict
+from collections import defaultdict
 import json
+import time
 from .core.config import get_settings
 from .api.routes import auth, qr, logs, reports, admin
 
 settings = get_settings()
+
+
+class RateLimiter:
+    def __init__(self, requests_per_minute: int = 60):
+        self.requests_per_minute = requests_per_minute
+        self.requests: Dict[str, List[float]] = defaultdict(list)
+
+    def is_allowed(self, key: str) -> bool:
+        now = time.time()
+        window_start = now - 60
+
+        self.requests[key] = [t for t in self.requests[key] if t > window_start]
+
+        if len(self.requests[key]) >= self.requests_per_minute:
+            return False
+
+        self.requests[key].append(now)
+        return True
+
+    def get_retry_after(self, key: str) -> int:
+        if not self.requests[key]:
+            return 0
+        oldest = min(self.requests[key])
+        return max(0, int(60 - (time.time() - oldest)))
+
+
+rate_limiter = RateLimiter()
+auth_rate_limiter = RateLimiter(requests_per_minute=10)
 
 
 class ConnectionManager:
@@ -25,8 +55,8 @@ class ConnectionManager:
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
-            except:
-                pass
+            except Exception:
+                self.disconnect(connection)
 
 
 manager = ConnectionManager()
@@ -46,6 +76,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if request.url.path.startswith("/api/auth"):
+        client_ip = request.client.host if request.client else "unknown"
+        key = f"auth:{client_ip}"
+
+        if not auth_rate_limiter.is_allowed(key):
+            retry_after = auth_rate_limiter.get_retry_after(key)
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Too many requests", "retry_after": retry_after},
+                headers={"Retry-After": str(retry_after)},
+            )
+
+    elif request.url.path.startswith("/api/qr/validate"):
+        client_ip = request.client.host if request.client else "unknown"
+        key = f"qr:{client_ip}"
+
+        if not rate_limiter.is_allowed(key):
+            retry_after = rate_limiter.get_retry_after(key)
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Too many requests", "retry_after": retry_after},
+                headers={"Retry-After": str(retry_after)},
+            )
+
+    return await call_next(request)
 
 
 @app.exception_handler(Exception)

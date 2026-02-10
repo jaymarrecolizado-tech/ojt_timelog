@@ -6,9 +6,13 @@ import StudentDashboard from '@/pages/StudentDashboard'
 import ScanQR from '@/pages/ScanQR'
 import StudentLogs from '@/pages/StudentLogs'
 import StudentDTR from '@/pages/StudentDTR'
+import StudentProfile from '@/pages/StudentProfile'
 import GuardDisplay from '@/pages/GuardDisplay'
 import AdminDashboard from '@/pages/AdminDashboard'
 import AdminStudents from '@/pages/AdminStudents'
+import AdminReports from '@/pages/AdminReports'
+import AdminSettings from '@/pages/AdminSettings'
+import AdminStudentDetail from '@/pages/AdminStudentDetail'
 
 function App() {
   const { user, loading } = useAuth()
@@ -52,6 +56,7 @@ function StudentRoutes() {
       <Route path="scan" element={<ScanQR />} />
       <Route path="logs" element={<StudentLogs />} />
       <Route path="dtr" element={<StudentDTR />} />
+      <Route path="profile" element={<StudentProfile />} />
     </Routes>
   )
 }
@@ -69,6 +74,9 @@ function AdminRoutes() {
     <Routes>
       <Route path="dashboard" element={<AdminDashboard />} />
       <Route path="students" element={<AdminStudents />} />
+      <Route path="students/:studentId" element={<AdminStudentDetail />} />
+      <Route path="reports" element={<AdminReports />} />
+      <Route path="settings" element={<AdminSettings />} />
     </Routes>
   )
 }

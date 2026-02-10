@@ -204,6 +204,22 @@ CREATE TABLE refresh_tokens (
 ) ENGINE=InnoDB;
 
 -- ============================================
+-- TABLE: password_reset_tokens
+-- ============================================
+CREATE TABLE password_reset_tokens (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_password_reset_tokens_user (user_id),
+    INDEX idx_password_reset_tokens_hash (token_hash)
+) ENGINE=InnoDB;
+
+-- ============================================
 -- Insert default location
 -- ============================================
 INSERT INTO locations (id, name, description, secret_key) VALUES
