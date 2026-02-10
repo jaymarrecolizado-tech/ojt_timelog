@@ -213,4 +213,4 @@ INSERT INTO locations (id, name, description, secret_key) VALUES
 -- Create default super admin (password: Admin@123)
 -- ============================================
 INSERT INTO users (id, email, password_hash, role, is_active, email_verified) VALUES
-(UUID(), 'admin@ojt-tlms.local', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4wqO.1LPMuLqLkzq', 'super_admin', TRUE, TRUE);
+(UUID(), 'admin@ojt-tlms.test', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4wqO.1LPMuLqLkzq', 'super_admin', TRUE, TRUE);

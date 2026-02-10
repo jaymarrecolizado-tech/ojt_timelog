@@ -18,7 +18,11 @@ class Settings(BaseSettings):
     QR_SECRET_KEY: str = "your-256-bit-qr-secret-key"
     QR_ROTATION_SECONDS: int = 30
 
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+    ]
 
     class Config:
         env_file = ".env"

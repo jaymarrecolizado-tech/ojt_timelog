@@ -153,10 +153,27 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     db.add(rt)
     await db.commit()
 
+    response_data = {"id": user.id, "email": user.email, "role": user.role}
+
+    if user.role == "student":
+        result = await db.execute(select(Student).where(Student.user_id == user.id))
+        student = result.scalar_one_or_none()
+        if student:
+            response_data["student"] = {
+                "id": student.id,
+                "student_id_no": student.student_id_no,
+                "first_name": student.first_name,
+                "last_name": student.last_name,
+                "department": student.department,
+                "program": student.program,
+                "company": student.company,
+                "status": student.status,
+            }
+
     return {
         "success": True,
         "data": {
-            "user": {"id": user.id, "email": user.email, "role": user.role},
+            "user": response_data,
             "session": {
                 "access_token": access_token,
                 "refresh_token": refresh_token,

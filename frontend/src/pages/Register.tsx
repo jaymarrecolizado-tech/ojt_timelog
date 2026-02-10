@@ -53,7 +53,14 @@ export default function Register() {
       })
       navigate('/login', { state: { message: 'Registration successful. Please login.' } })
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed')
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((e: any) => e.msg).join(', '))
+      } else if (typeof detail === 'string') {
+        setError(detail)
+      } else {
+        setError('Registration failed')
+      }
     } finally {
       setLoading(false)
     }
