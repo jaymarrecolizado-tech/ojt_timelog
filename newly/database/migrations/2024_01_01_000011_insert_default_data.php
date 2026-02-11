@@ -55,6 +55,51 @@ return new class extends Migration
                 'updated_at' => now(),
             ]));
         }
+
+        // Insert 5 test students
+        $students = [
+            ['email' => 'student1@test.com', 'password' => 'Student@123', 'student_id_no' => '20240001', 'first_name' => 'Juan', 'last_name' => 'Dela Cruz', 'department' => 'Engineering', 'program' => 'BS Computer Engineering'],
+            ['email' => 'student2@test.com', 'password' => 'Student@123', 'student_id_no' => '20240002', 'first_name' => 'Maria', 'last_name' => 'Santos', 'department' => 'IT', 'program' => 'BS Information Technology'],
+            ['email' => 'student3@test.com', 'password' => 'Student@123', 'student_id_no' => '20240003', 'first_name' => 'Pedro', 'last_name' => 'Reyes', 'department' => 'Engineering', 'program' => 'BS Electronics Engineering'],
+            ['email' => 'student4@test.com', 'password' => 'Student@123', 'student_id_no' => '20240004', 'first_name' => 'Ana', 'last_name' => 'Garcia', 'department' => 'Business', 'program' => 'BS Business Administration'],
+            ['email' => 'student5@test.com', 'password' => 'Student@123', 'student_id_no' => '20240005', 'first_name' => 'Carlos', 'last_name' => 'Torres', 'department' => 'IT', 'program' => 'BS Computer Science'],
+        ];
+
+        foreach ($students as $studentData) {
+            $userId = Str::uuid();
+            DB::table('users')->insert([
+                'id' => $userId,
+                'email' => $studentData['email'],
+                'password_hash' => Hash::make($studentData['password']),
+                'role' => 'student',
+                'is_active' => true,
+                'email_verified' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('students')->insert([
+                'id' => Str::uuid(),
+                'user_id' => $userId,
+                'student_id_no' => $studentData['student_id_no'],
+                'first_name' => $studentData['first_name'],
+                'middle_name' => null,
+                'last_name' => $studentData['last_name'],
+                'suffix' => null,
+                'department' => $studentData['department'],
+                'program' => $studentData['program'],
+                'company' => null,
+                'company_address' => null,
+                'supervisor_name' => null,
+                'ojt_start' => null,
+                'ojt_end' => null,
+                'required_hours' => 486,
+                'contact_no' => null,
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     public function down(): void

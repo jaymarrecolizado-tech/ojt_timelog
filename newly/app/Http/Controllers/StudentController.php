@@ -93,13 +93,18 @@ class StudentController extends Controller
             
             $hours = $this->calculateHoursForDay($dayLogs);
             
+            $amIn = $dayLogs->first(fn($log) => $log->log_category === 'AM' && $log->log_type === 'IN');
+            $amOut = $dayLogs->first(fn($log) => $log->log_category === 'AM' && $log->log_type === 'OUT');
+            $pmIn = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'IN');
+            $pmOut = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'OUT');
+
             $dayData = [
                 'date' => $current->format('F d, Y'),
                 'day_name' => $current->format('l'),
-                'am_in' => $dayLogs->firstWhere('log_category', 'AM')->where('log_type', 'IN')?->timestamp?->format('h:i A'),
-                'am_out' => $dayLogs->firstWhere('log_category', 'AM')->where('log_type', 'OUT')?->timestamp?->format('h:i A'),
-                'pm_in' => $dayLogs->firstWhere('log_category', 'PM')->where('log_type', 'IN')?->timestamp?->format('h:i A'),
-                'pm_out' => $dayLogs->firstWhere('log_category', 'PM')->where('log_type', 'OUT')?->timestamp?->format('h:i A'),
+                'am_in' => $amIn?->timestamp?->format('h:i A'),
+                'am_out' => $amOut?->timestamp?->format('h:i A'),
+                'pm_in' => $pmIn?->timestamp?->format('h:i A'),
+                'pm_out' => $pmOut?->timestamp?->format('h:i A'),
                 'hours' => $hours,
                 'status' => $this->getDayStatus($current, $dayLogs, $hours),
             ];
@@ -125,7 +130,10 @@ class StudentController extends Controller
         // Determine next scan type
         $nextType = $this->getNextScanType($todayLogs);
         
-        return view('student.scan', compact('nextType'));
+        // Get active locations for scanning
+        $locations = \App\Models\Location::where('is_active', true)->get();
+        
+        return view('student.scan', compact('nextType', 'locations'));
     }
 
     public function profile()

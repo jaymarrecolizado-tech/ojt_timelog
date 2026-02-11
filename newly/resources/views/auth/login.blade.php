@@ -34,8 +34,13 @@
 
                         <div class="mb-4">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                                   id="password" name="password" required>
+                            <div class="input-group">
+                                <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                                       id="password" name="password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="d-grid">
@@ -49,10 +54,49 @@
                 </div>
             </div>
             
-            <div class="text-center mt-3 text-muted small">
-                <p>Default admin: admin@ojt-tlms.test / Admin@123</p>
+            <!-- Login Credentials Info -->
+            <div class="mt-3">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white py-2">
+                        <strong><i class="bi bi-info-circle me-2"></i>Test Login Credentials</strong>
+                    </div>
+                    <div class="card-body p-3">
+                        <p class="mb-2"><strong>Admin:</strong></p>
+                        <p class="mb-1 text-muted small">admin@ojt-tlms.test / Admin@123</p>
+                        
+                        <hr class="my-2">
+                        
+                        <p class="mb-2"><strong>Students (Password: Student@123):</strong></p>
+                        <ul class="list-unstyled mb-0 small text-muted">
+                            <li><i class="bi bi-person me-1"></i>student1@test.com - Juan Dela Cruz</li>
+                            <li><i class="bi bi-person me-1"></i>student2@test.com - Maria Santos</li>
+                            <li><i class="bi bi-person me-1"></i>student3@test.com - Pedro Reyes</li>
+                            <li><i class="bi bi-person me-1"></i>student4@test.com - Ana Garcia</li>
+                            <li><i class="bi bi-person me-1"></i>student5@test.com - Carlos Torres</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+</script>
 @endsection

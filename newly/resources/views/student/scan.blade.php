@@ -46,6 +46,21 @@
                     <h5 class="mb-0">Next: {{ $nextType['label'] }}</h5>
                 </div>
 
+                @if($locations->count() > 0)
+                    <div class="mb-4">
+                        <label for="location-select" class="form-label">Select Location:</label>
+                        <select id="location-select" class="form-select">
+                            @foreach($locations as $location)
+                                <option value="{{ $location->id }}">{{ $location->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @else
+                    <div class="alert alert-warning mb-4">
+                        No active locations available. Please contact the administrator.
+                    </div>
+                @endif
+
                 <div class="position-relative d-inline-block mb-4">
                     <video id="qr-video" autoplay playsinline></video>
                     <div class="scan-overlay">
@@ -87,6 +102,14 @@
     const statusDiv = document.getElementById('scan-status');
 
     startBtn.addEventListener('click', async () => {
+        // Check if location is selected
+        const locationSelect = document.getElementById('location-select');
+        if (locationSelect && !locationSelect.value) {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.textContent = 'Please select a location before scanning.';
+            return;
+        }
+        
         try {
             html5QrCode = new Html5Qrcode("qr-video");
             
@@ -123,6 +146,16 @@
     });
 
     async function onScanSuccess(decodedText) {
+        // Get selected location
+        const locationSelect = document.getElementById('location-select');
+        const locationId = locationSelect ? locationSelect.value : null;
+        
+        if (!locationId) {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.textContent = 'Please select a location first.';
+            return;
+        }
+        
         // Stop scanning temporarily
         if (html5QrCode) {
             await html5QrCode.pause();
@@ -141,7 +174,7 @@
                 body: JSON.stringify({
                     token: decodedText,
                     student_id: '{{ auth()->user()->student->id }}',
-                    location_id: 'default-location-id' // You'll need to handle this properly
+                    location_id: locationId
                 })
             });
 

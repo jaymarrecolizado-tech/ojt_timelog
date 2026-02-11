@@ -8,6 +8,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
     public function handle(Request $request, Closure $next, string $role): Response
     {
         if (!auth()->check()) {
@@ -16,22 +21,21 @@ class RoleMiddleware
 
         $user = auth()->user();
 
-        switch ($role) {
-            case 'admin':
-                if (!$user->isAdmin() && !$user->isSuperAdmin()) {
-                    abort(403, 'Unauthorized access.');
-                }
-                break;
-            case 'super_admin':
-                if (!$user->isSuperAdmin()) {
-                    abort(403, 'Super admin access required.');
-                }
-                break;
-            case 'student':
-                if (!$user->isStudent()) {
-                    abort(403, 'Student access required.');
-                }
-                break;
+        // Check if user has the required role
+        if ($role === 'admin' && !$user->isAdmin()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        if ($role === 'super_admin' && !$user->isSuperAdmin()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        if ($role === 'student' && !$user->isStudent()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        if ($role === 'guard' && !$user->isGuard()) {
+            abort(403, 'Unauthorized access.');
         }
 
         return $next($request);
