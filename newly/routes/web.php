@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\QRController;
+use App\Http\Controllers\VerificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,11 +14,40 @@ use App\Http\Controllers\QRController;
 */
 
 // Apply security headers to all routes
-Route::middleware(['security'])->group(function () {
+    Route::middleware(['security', 'xss'])->group(function () {
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->isAdmin() || $user->isSuperAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+        if ($user->isGuard()) {
+            return redirect()->route('guard.dashboard');
+        }
+        if ($user->isStudent()) {
+            return redirect()->route('student.dashboard');
+        }
+    }
     return redirect()->route('login');
 });
+
+// Home route - redirects based on role
+Route::get('/home', function () {
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->isAdmin() || $user->isSuperAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+        if ($user->isGuard()) {
+            return redirect()->route('guard.dashboard');
+        }
+        if ($user->isStudent()) {
+            return redirect()->route('student.dashboard');
+        }
+    }
+    return redirect()->route('login');
+})->name('home');
 
 // Authentication Routes with Rate Limiting and Account Lockout
 Route::middleware(['guest'])->group(function () {
@@ -29,15 +59,15 @@ Route::middleware(['guest'])->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Guard Routes
-Route::middleware(['auth', 'role:guard'])->prefix('guard')->name('guard.')->group(function () {
-    Route::get('/dashboard', [QRController::class, 'guardQR'])->name('dashboard');
-    Route::get('/qr', [QRController::class, 'guardQR'])->name('qr');
-    Route::get('/qr/refresh', [QRController::class, 'guardRefresh'])->name('qr.refresh');
+// Email Verification Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/email/verify', [VerificationController::class, 'showVerify'])->name('verification.notice');
+    Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.resend');
+    Route::get('/email/verify/{token}', [VerificationController::class, 'verify'])->name('verification.verify');
 });
 
 // Student Routes
-Route::middleware(['auth'])->prefix('student')->name('student.')->group(function () {
+Route::middleware(['auth', 'xss', 'email.verified'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
     Route::get('/logs', [StudentController::class, 'logs'])->name('logs');
     Route::get('/scan', [StudentController::class, 'scan'])->name('scan');

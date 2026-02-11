@@ -76,14 +76,14 @@ class StudentMockDataSeeder extends Seeder
                 if ($dayOfWeek >= 6) continue;
                 
                 $baseHour = 7 + ($index % 3);
-                $baseMinute = 30 + ($index * 10) % 30;
+                $baseMinute = (30 + ($index * 10)) % 60;
                 $randomOffset = ($index * $day) % 15;
                 
                 $times = [
-                    ['type' => 'IN', 'category' => 'AM', 'hour' => $baseHour, 'minute' => $baseMinute + $randomOffset],
+                    ['type' => 'IN', 'category' => 'AM', 'hour' => $baseHour, 'minute' => min(59, $baseMinute + $randomOffset)],
                     ['type' => 'OUT', 'category' => 'AM', 'hour' => 12, 'minute' => 0],
-                    ['type' => 'IN', 'category' => 'PM', 'hour' => 13, 'minute' => 0 + $randomOffset],
-                    ['type' => 'OUT', 'category' => 'PM', 'hour' => 17 + ($index % 2), 'minute' => 0 + intdiv($randomOffset, 2)],
+                    ['type' => 'IN', 'category' => 'PM', 'hour' => 13, 'minute' => min(59, $randomOffset)],
+                    ['type' => 'OUT', 'category' => 'PM', 'hour' => 17 + ($index % 2), 'minute' => min(59, intdiv($randomOffset, 2))],
                 ];
                 
                 foreach ($times as $time) {

@@ -306,13 +306,35 @@ class AdminController extends Controller
 
     public function updateSettings(Request $request)
     {
-        foreach ($request->except(['_token', '_method']) as $key => $value) {
-            $setting = SystemSetting::where('setting_key', $key)->first();
-            if ($setting) {
-                $setting->update([
-                    'setting_value' => $value,
-                    'updated_by' => Auth::id(),
-                ]);
+        $validated = $request->validate([
+            'qr_rotation_seconds' => 'nullable|integer|min:10|max:300',
+            'max_scans_per_day' => 'nullable|integer|min:1|max:10',
+            'grace_period_minutes' => 'nullable|integer|min:0|max:60',
+            'schedule_am_start' => 'nullable|date_format:H:i',
+            'schedule_am_end' => 'nullable|date_format:H:i|after:schedule_am_start',
+            'schedule_pm_start' => 'nullable|date_format:H:i',
+            'schedule_pm_end' => 'nullable|date_format:H:i|after:schedule_pm_start',
+            'geolocation_required' => 'nullable|in:true,false,1,0',
+            'geolocation_max_distance' => 'nullable|integer|min:10|max:1000',
+            'scan_debounce_seconds' => 'nullable|integer|min:5|max:300',
+        ], [
+            'schedule_am_end.after' => 'AM end time must be after AM start time',
+            'schedule_pm_end.after' => 'PM end time must be after PM start time',
+            'geolocation_required.in' => 'Invalid value for geolocation required setting',
+            'qr_rotation_seconds.integer' => 'QR rotation must be a number',
+            'qr_rotation_seconds.min' => 'QR rotation must be at least 10 seconds',
+            'qr_rotation_seconds.max' => 'QR rotation cannot exceed 300 seconds',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            if ($value !== null) {
+                $setting = SystemSetting::where('setting_key', $key)->first();
+                if ($setting) {
+                    $setting->update([
+                        'setting_value' => $value,
+                        'updated_by' => Auth::id(),
+                    ]);
+                }
             }
         }
 

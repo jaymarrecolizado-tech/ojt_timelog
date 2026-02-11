@@ -34,7 +34,7 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'Account is deactivated']);
         }
 
-        Auth::login($user);
+        Auth::login($user, true);
 
         if ($user->isAdmin() || $user->isSuperAdmin()) {
             return redirect()->route('admin.dashboard');
@@ -79,6 +79,8 @@ class AuthController extends Controller
         ]);
 
         $userId = Str::uuid();
+        $token = Str::random(64);
+        
         $user = User::create([
             'id' => $userId,
             'email' => $validated['email'],
@@ -86,6 +88,7 @@ class AuthController extends Controller
             'role' => 'student',
             'is_active' => true,
             'email_verified' => false,
+            'email_verification_token' => hash('sha256', $token),
         ]);
 
         Student::create([
@@ -103,9 +106,9 @@ class AuthController extends Controller
             'status' => 'active',
         ]);
 
-        Auth::login($user);
+        Auth::login($user, true);
 
-        return redirect()->route('student.dashboard')->with('success', 'Registration successful!');
+        return redirect()->route('verification.notice')->with('success', 'Registration successful! Please verify your email.');
     }
 
     public function logout()
