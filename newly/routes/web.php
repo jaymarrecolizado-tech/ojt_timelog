@@ -29,6 +29,13 @@ Route::middleware(['guest'])->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Guard Routes
+Route::middleware(['auth', 'role:guard'])->prefix('guard')->name('guard.')->group(function () {
+    Route::get('/dashboard', [QRController::class, 'guardQR'])->name('dashboard');
+    Route::get('/qr', [QRController::class, 'guardQR'])->name('qr');
+    Route::get('/qr/refresh', [QRController::class, 'guardRefresh'])->name('qr.refresh');
+});
+
 // Student Routes
 Route::middleware(['auth'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');

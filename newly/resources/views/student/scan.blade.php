@@ -39,7 +39,13 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6 text-center">
-            <h2 class="mb-4">Scan QR Code</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <h2 class="mb-0">Scan QR Code</h2>
+                <div style="width: 80px;"></div>
+            </div>
             
             @if($nextType)
                 <div class="alert alert-info mb-4">

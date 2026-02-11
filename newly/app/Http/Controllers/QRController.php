@@ -21,6 +21,34 @@ class QRController extends Controller
     {
         $this->scanTypeService = $scanTypeService;
     }
+
+    public function guardQR()
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$user->isGuard()) {
+            return redirect()->route('login');
+        }
+
+        $location = Location::where('is_active', true)->first();
+
+        if (!$location) {
+            $location = Location::first();
+        }
+
+        return view('guard.qr', compact('user', 'location'));
+    }
+
+    public function guardRefresh()
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$user->isGuard()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        return $this->generate();
+    }
     public function validate(Request $request)
     {
         $validated = $request->validate([

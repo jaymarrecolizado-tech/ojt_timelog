@@ -13,12 +13,19 @@
                     <li class="breadcrumb-item active">{{ $student->full_name }}</li>
                 </ol>
             </nav>
-            <h2>{{ $student->full_name }}</h2>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editStudentModal">
-                <i class="bi bi-pencil me-2"></i>Edit
-            </button>
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">{{ $student->full_name }}</h2>
+                <div class="d-flex align-items-center gap-3">
+                    <form method="GET" class="d-flex align-items-center gap-2">
+                        <label for="month" class="form-label mb-0">Month:</label>
+                        <input type="month" id="month" name="month" class="form-control" value="{{ $month ?? now()->format('Y-m') }}" style="width: 180px;">
+                        <button type="submit" class="btn btn-outline-primary">View</button>
+                    </form>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editStudentModal">
+                        <i class="bi bi-pencil me-2"></i>Edit
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -123,15 +130,17 @@
                                         $pmOut = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'OUT');
                                         
                                         $hours = 0;
-                                        if ($amIn && $amOut) $hours += $amIn->timestamp->diffInHours($amOut->timestamp);
-                                        if ($pmIn && $pmOut) $hours += $pmIn->timestamp->diffInHours($pmOut->timestamp);
+                                        if ($amIn && $amOut) $hours += \Carbon\Carbon::parse($amIn->timestamp)->diffInHours(\Carbon\Carbon::parse($amOut->timestamp));
+                                        if ($pmIn && $pmOut) $hours += \Carbon\Carbon::parse($pmIn->timestamp)->diffInHours(\Carbon\Carbon::parse($pmOut->timestamp));
+                                        
+                                        $displayDate = \Carbon\Carbon::parse(explode(' ', $date)[0])->format('M d, Y');
                                     @endphp
                                     <tr>
-                                        <td>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</td>
-                                        <td>{{ $amIn ? $amIn->timestamp->format('h:i A') : '--' }}</td>
-                                        <td>{{ $amOut ? $amOut->timestamp->format('h:i A') : '--' }}</td>
-                                        <td>{{ $pmIn ? $pmIn->timestamp->format('h:i A') : '--' }}</td>
-                                        <td>{{ $pmOut ? $pmOut->timestamp->format('h:i A') : '--' }}</td>
+                                        <td>{{ $displayDate }}</td>
+                                        <td>{{ $amIn ? \Carbon\Carbon::parse($amIn->timestamp)->format('h:i A') : '--' }}</td>
+                                        <td>{{ $amOut ? \Carbon\Carbon::parse($amOut->timestamp)->format('h:i A') : '--' }}</td>
+                                        <td>{{ $pmIn ? \Carbon\Carbon::parse($pmIn->timestamp)->format('h:i A') : '--' }}</td>
+                                        <td>{{ $pmOut ? \Carbon\Carbon::parse($pmOut->timestamp)->format('h:i A') : '--' }}</td>
                                         <td>{{ $hours }}</td>
                                     </tr>
                                 @empty
@@ -150,7 +159,7 @@
                         </div>
                         <nav aria-label="Page navigation">
                             <ul class="pagination mb-0">
-                                {{ $logsPaginated->links('pagination.bootstrap-5') }}
+                                {{ $logsPaginated->links() }}
                             </ul>
                         </nav>
                     </div>

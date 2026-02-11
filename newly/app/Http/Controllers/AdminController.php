@@ -167,12 +167,14 @@ class AdminController extends Controller
         return redirect()->route('admin.students')->with('success', 'Student created successfully');
     }
 
-    public function studentDetail($id)
+    public function studentDetail($id, Request $request)
     {
         $student = Student::findOrFail($id);
 
-        $monthStart = now()->startOfMonth()->toDateString();
-        $monthEnd = now()->endOfMonth()->toDateString();
+        $month = $request->input('month', now()->format('Y-m'));
+        
+        $monthStart = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
+        $monthEnd = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
 
         $logsQuery = TimeLog::where('student_id', $student->id)
             ->whereBetween('date', [$monthStart, $monthEnd])
@@ -184,7 +186,7 @@ class AdminController extends Controller
 
         $logs = $logsPaginated->getCollection()->groupBy('date');
 
-        return view('admin.student_detail', compact('student', 'logs', 'logsPaginated'));
+        return view('admin.student_detail', compact('student', 'logs', 'logsPaginated', 'month'));
     }
 
     public function updateStudent(Request $request, $id)

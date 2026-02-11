@@ -41,7 +41,7 @@ class AuthController extends Controller
         }
 
         if ($user->isGuard()) {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('guard.dashboard');
         }
 
         return redirect()->route('student.dashboard');
