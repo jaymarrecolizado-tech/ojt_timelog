@@ -53,30 +53,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Login Credentials Info -->
-            <div class="mt-3">
-                <div class="card border-info">
-                    <div class="card-header bg-info text-white py-2">
-                        <strong><i class="bi bi-info-circle me-2"></i>Test Login Credentials</strong>
-                    </div>
-                    <div class="card-body p-3">
-                        <p class="mb-2"><strong>Admin:</strong></p>
-                        <p class="mb-1 text-muted small">admin@ojt-tlms.test / Admin@123</p>
-                        
-                        <hr class="my-2">
-                        
-                        <p class="mb-2"><strong>Students (Password: Student@123):</strong></p>
-                        <ul class="list-unstyled mb-0 small text-muted">
-                            <li><i class="bi bi-person me-1"></i>student1@test.com - Juan Dela Cruz</li>
-                            <li><i class="bi bi-person me-1"></i>student2@test.com - Maria Santos</li>
-                            <li><i class="bi bi-person me-1"></i>student3@test.com - Pedro Reyes</li>
-                            <li><i class="bi bi-person me-1"></i>student4@test.com - Ana Garcia</li>
-                            <li><i class="bi bi-person me-1"></i>student5@test.com - Carlos Torres</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

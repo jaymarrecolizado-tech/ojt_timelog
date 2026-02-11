@@ -80,6 +80,23 @@
                         Stop Camera
                     </button>
                 </div>
+
+                <!-- Manual QR Entry for Mobile/Tablet -->
+                <hr class="my-4">
+                <div class="card border-secondary">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-keyboard me-2"></i>Manual Entry
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">If camera doesn't work, manually enter the QR code:</p>
+                        <div class="input-group">
+                            <input type="text" id="manual-qr-code" class="form-control" placeholder="Enter QR code here">
+                            <button class="btn btn-success" type="button" id="submit-manual-qr">
+                                <i class="bi bi-check-lg"></i> Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
             @else
                 <div class="alert alert-success">
                     <h5 class="mb-0">All scans completed for today!</h5>
@@ -211,5 +228,27 @@
     function onScanFailure(error) {
         // Ignore scan failures (happens frequently when no QR is in frame)
     }
+
+    // Manual QR Code Entry
+    document.getElementById('submit-manual-qr').addEventListener('click', async function() {
+        const manualInput = document.getElementById('manual-qr-code');
+        const qrCode = manualInput.value.trim();
+        
+        if (!qrCode) {
+            statusDiv.className = 'alert alert-warning';
+            statusDiv.textContent = 'Please enter a QR code.';
+            return;
+        }
+        
+        await onScanSuccess(qrCode);
+        manualInput.value = ''; // Clear input after submission
+    });
+
+    // Allow Enter key to submit
+    document.getElementById('manual-qr-code').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('submit-manual-qr').click();
+        }
+    });
 </script>
 @endsection

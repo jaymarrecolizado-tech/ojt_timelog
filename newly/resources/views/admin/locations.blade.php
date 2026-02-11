@@ -62,6 +62,13 @@
             </div>
         @endforelse
     </div>
+    @if($locations->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                {{ $locations->links('pagination.bootstrap-5') }}
+            </nav>
+        </div>
+    @endif
 </div>
 
 <!-- Add Location Modal -->

@@ -6,6 +6,8 @@ use App\Models\TimeLog;
 use App\Models\Student;
 use App\Models\Location;
 use App\Models\LogOverride;
+use App\Constants\AppConstants;
+use App\Services\ScanTypeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -13,6 +15,12 @@ use Carbon\Carbon;
 
 class QRController extends Controller
 {
+    protected ScanTypeService $scanTypeService;
+
+    public function __construct(ScanTypeService $scanTypeService)
+    {
+        $this->scanTypeService = $scanTypeService;
+    }
     public function validate(Request $request)
     {
         $validated = $request->validate([
@@ -31,10 +39,32 @@ class QRController extends Controller
             return response()->json(['error' => 'Invalid location'], 400);
         }
 
+        // Verify HMAC signature
+        $parts = explode('.', $validated['token']);
+        if (count($parts) !== 3) {
+            return response()->json(['error' => 'Invalid QR code format'], 400);
+        }
+
+        [$randomPart, $timestamp, $signature] = $parts;
+        
+        // Recreate expected signature
+        $expectedSignature = hash_hmac('sha256', $randomPart . '.' . $timestamp, $location->secret_key);
+        
+        // Verify signature
+        if (!hash_equals($expectedSignature, $signature)) {
+            return response()->json(['error' => 'Invalid QR code signature'], 400);
+        }
+
+        // Check expiration
+        $tokenTime = base64_decode($timestamp);
+        if (now()->timestamp - $tokenTime > AppConstants::QR_TOKEN_EXPIRY_SECONDS) {
+            return response()->json(['error' => 'QR code has expired'], 400);
+        }
+
         // Validate QR token hash
         $tokenHash = hash('sha256', $validated['token']);
         $recentLog = TimeLog::where('qr_token_hash', $tokenHash)
-            ->where('timestamp', '>', now()->subMinutes(5))
+            ->where('timestamp', '>', now()->subMinutes(AppConstants::QR_TOKEN_REUSE_WINDOW_MINUTES))
             ->first();
 
         if ($recentLog) {
@@ -46,12 +76,12 @@ class QRController extends Controller
             ->where('date', $today)
             ->count();
 
-        if ($todayLogs >= 4) {
+        if ($todayLogs >= AppConstants::MAX_DAILY_SCANS) {
             return response()->json(['error' => 'Maximum scans reached for today'], 400);
         }
 
         // Determine log type and category
-        $nextScan = $this->getNextScanType($todayLogs);
+        $nextScan = $this->scanTypeService->getNextScanType($todayLogs);
         if (!$nextScan) {
             return response()->json(['error' => 'No more scans available'], 400);
         }
@@ -84,24 +114,26 @@ class QRController extends Controller
 
     public function generate()
     {
-        $token = Str::random(32);
-        $expiresAt = now()->addSeconds(30);
+        $location = Location::where('is_active', true)->first();
+
+        if (!$location) {
+            return response()->json(['error' => 'No active locations found'], 400);
+        }
+
+        $randomPart = Str::random(AppConstants::QR_RANDOM_PART_LENGTH);
+        $timestamp = base64_encode((string) now()->timestamp);
+
+        $signature = hash_hmac('sha256', $randomPart . '.' . $timestamp, $location->secret_key);
+
+        $token = $randomPart . '.' . $timestamp . '.' . $signature;
+
+        $expiresAt = now()->addSeconds(AppConstants::QR_TOKEN_EXPIRY_SECONDS);
 
         return response()->json([
             'token' => $token,
             'expires_at' => $expiresAt->toIso8601String(),
+            'location_id' => $location->id,
         ]);
     }
 
-    private function getNextScanType($logCount)
-    {
-        $types = [
-            0 => ['type' => 'IN', 'category' => 'AM', 'label' => 'AM IN'],
-            1 => ['type' => 'OUT', 'category' => 'AM', 'label' => 'AM OUT'],
-            2 => ['type' => 'IN', 'category' => 'PM', 'label' => 'PM IN'],
-            3 => ['type' => 'OUT', 'category' => 'PM', 'label' => 'PM OUT'],
-        ];
-
-        return $types[$logCount] ?? null;
-    }
 }

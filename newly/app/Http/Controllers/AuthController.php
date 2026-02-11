@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Student;
+use App\Constants\AppConstants;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -39,6 +40,10 @@ class AuthController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
+        if ($user->isGuard()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return redirect()->route('student.dashboard');
     }
 
@@ -51,7 +56,15 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
+            'password' => [
+                'required',
+                'min:' . AppConstants::PASSWORD_MIN_LENGTH,
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
             'student_id_no' => 'required|unique:students,student_id_no',
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
@@ -59,7 +72,10 @@ class AuthController extends Controller
             'suffix' => 'nullable|string|max:10',
             'department' => 'required|string|max:150',
             'program' => 'required|string|max:150',
+            'school_university' => 'required|string|max:200',
             'contact_no' => 'nullable|string|max:20',
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*#?&).',
         ]);
 
         $userId = Str::uuid();
@@ -82,6 +98,7 @@ class AuthController extends Controller
             'suffix' => $validated['suffix'],
             'department' => $validated['department'],
             'program' => $validated['program'],
+            'school_university' => $validated['school_university'],
             'contact_no' => $validated['contact_no'],
             'status' => 'active',
         ]);

@@ -80,8 +80,15 @@
             </div>
         </div>
         @if($students->hasPages())
-            <div class="card-footer">
-                {{ $students->links() }}
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Showing {{ $students->firstItem() ?? 0 }} to {{ $students->lastItem() ?? 0 }} of {{ $students->total() }} entries
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        {{ $students->links('pagination.bootstrap-5') }}
+                    </ul>
+                </nav>
             </div>
         @endif
     </div>

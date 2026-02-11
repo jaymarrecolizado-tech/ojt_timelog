@@ -9,8 +9,10 @@ use App\Models\Location;
 use App\Models\Holiday;
 use App\Models\SystemSetting;
 use App\Models\LogOverride;
+use App\Constants\AppConstants;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -18,20 +20,37 @@ use Carbon\Carbon;
 
 class AdminController extends Controller
 {
+    protected function getSystemSetting(string $key, $default = null)
+    {
+        return Cache::remember("setting:{$key}", AppConstants::CACHE_SETTINGS_TTL, function () use ($key, $default) {
+            return SystemSetting::where('setting_key', $key)->first()?->setting_value ?? $default;
+        });
+    }
+
+    protected function getScheduleSettings(): array
+    {
+        return Cache::remember('schedule_settings', AppConstants::CACHE_SETTINGS_TTL, function () {
+            return [
+                'grace_minutes' => (int) $this->getSystemSetting('grace_period_minutes', AppConstants::DEFAULT_GRACE_PERIOD_MINUTES),
+                'schedule_start' => $this->getSystemSetting('schedule_am_start', AppConstants::DEFAULT_SCHEDULE_START),
+            ];
+        });
+    }
     public function dashboard()
     {
         $totalStudents = Student::count();
         $today = now()->toDateString();
-        
+
         $presentToday = TimeLog::where('date', $today)
             ->distinct('student_id')
             ->count('student_id');
 
         $absentToday = max(0, $totalStudents - $presentToday);
 
-        $graceMinutes = (int) SystemSetting::where('setting_key', 'grace_period_minutes')->first()?->setting_value ?? 15;
-        $scheduleStart = SystemSetting::where('setting_key', 'schedule_am_start')->first()?->setting_value ?? '08:00';
-        
+        $scheduleSettings = $this->getScheduleSettings();
+        $graceMinutes = $scheduleSettings['grace_minutes'];
+        $scheduleStart = $scheduleSettings['schedule_start'];
+
         $amIns = TimeLog::where('date', $today)
             ->where('log_type', 'IN')
             ->where('log_category', 'AM')
@@ -48,6 +67,7 @@ class AdminController extends Controller
 
         $allIns = TimeLog::where('date', $today)
             ->where('log_type', 'IN')
+            ->with('student')
             ->orderBy('timestamp', 'desc')
             ->get();
 
@@ -56,7 +76,7 @@ class AdminController extends Controller
             ->get();
 
         $outStudentIds = $allOuts->pluck('student_id')->toArray();
-        
+
         $clockedIn = [];
         $seen = [];
         foreach ($allIns as $log) {
@@ -64,8 +84,8 @@ class AdminController extends Controller
                 continue;
             }
             $seen[] = $log->student_id;
-            
-            $student = Student::find($log->student_id);
+
+            $student = $log->student;
             if ($student) {
                 $clockedIn[] = [
                     'student_id' => $student->id,
@@ -104,7 +124,7 @@ class AdminController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $students = $query->paginate(20);
+        $students = $query->paginate(AppConstants::PAGINATION_STUDENTS);
 
         return view('admin.students', compact('students'));
     }
@@ -150,18 +170,21 @@ class AdminController extends Controller
     public function studentDetail($id)
     {
         $student = Student::findOrFail($id);
-        
+
         $monthStart = now()->startOfMonth()->toDateString();
         $monthEnd = now()->endOfMonth()->toDateString();
 
-        $logs = TimeLog::where('student_id', $student->id)
+        $logsQuery = TimeLog::where('student_id', $student->id)
             ->whereBetween('date', [$monthStart, $monthEnd])
+            ->with(['student', 'location'])
             ->orderBy('date')
-            ->orderBy('timestamp')
-            ->get()
-            ->groupBy('date');
+            ->orderBy('timestamp');
 
-        return view('admin.student_detail', compact('student', 'logs'));
+        $logsPaginated = $logsQuery->paginate(AppConstants::PAGINATION_LOGS_ADMIN);
+
+        $logs = $logsPaginated->getCollection()->groupBy('date');
+
+        return view('admin.student_detail', compact('student', 'logs', 'logsPaginated'));
     }
 
     public function updateStudent(Request $request, $id)
@@ -239,9 +262,10 @@ class AdminController extends Controller
     private function generateLateReport()
     {
         $today = now()->toDateString();
-        $graceMinutes = (int) SystemSetting::where('setting_key', 'grace_period_minutes')->first()?->setting_value ?? 15;
-        $scheduleStart = SystemSetting::where('setting_key', 'schedule_am_start')->first()?->setting_value ?? '08:00';
-        
+        $scheduleSettings = $this->getScheduleSettings();
+        $graceMinutes = $scheduleSettings['grace_minutes'];
+        $scheduleStart = $scheduleSettings['schedule_start'];
+
         $lateLogs = TimeLog::where('date', $today)
             ->where('log_type', 'IN')
             ->where('log_category', 'AM')
@@ -295,7 +319,7 @@ class AdminController extends Controller
 
     public function locations()
     {
-        $locations = Location::all();
+        $locations = Location::paginate(AppConstants::PAGINATION_LOCATIONS);
         return view('admin.locations', compact('locations'));
     }
 
@@ -322,11 +346,14 @@ class AdminController extends Controller
     public function addManualLog(Request $request, $studentId)
     {
         $validated = $request->validate([
-            'date' => 'required|date',
-            'time' => 'required',
+            'date' => 'required|date|before_or_equal:today',
+            'time' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/'],
             'log_type' => 'required|in:IN,OUT',
             'log_category' => 'required|in:AM,PM',
-            'reason' => 'required|string|max:500',
+            'reason' => 'required|string|max:500|not_regex:/[<>]/',
+        ], [
+            'time.regex' => 'Time must be in HH:MM format (24-hour format).',
+            'reason.not_regex' => 'Reason cannot contain HTML tags for security reasons.',
         ]);
 
         $student = Student::findOrFail($studentId);

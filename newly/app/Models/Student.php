@@ -25,6 +25,7 @@ class Student extends Model
         'suffix',
         'department',
         'program',
+        'school_university',
         'company',
         'company_address',
         'supervisor_name',

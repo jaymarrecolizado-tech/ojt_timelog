@@ -64,6 +64,11 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="school_university" class="form-label">School/University</label>
+                            <input type="text" class="form-control" id="school_university" name="school_university" value="{{ old('school_university') }}" required>
+                        </div>
+
+                        <div class="mb-3">
                             <label for="contact_no" class="form-label">Contact Number</label>
                             <input type="text" class="form-control" id="contact_no" name="contact_no" value="{{ old('contact_no') }}">
                         </div>

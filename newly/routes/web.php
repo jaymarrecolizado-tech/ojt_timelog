@@ -12,16 +12,19 @@ use App\Http\Controllers\QRController;
 |--------------------------------------------------------------------------
 */
 
+// Apply security headers to all routes
+Route::middleware(['security'])->group(function () {
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Authentication Routes
-Route::middleware('guest')->group(function () {
+// Authentication Routes with Rate Limiting and Account Lockout
+Route::middleware(['guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware(['throttle:5,1', 'lockout']);
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:3,60');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -34,8 +37,8 @@ Route::middleware(['auth'])->prefix('student')->name('student.')->group(function
     Route::get('/profile', [StudentController::class, 'profile'])->name('profile');
 });
 
-// Admin Routes
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+// Admin Routes (accessible by admin and guard)
+Route::middleware(['auth', 'role:admin,guard'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
     // Students
@@ -62,3 +65,5 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // QR API Routes
 Route::post('/api/qr/validate', [QRController::class, 'validate'])->name('qr.validate');
 Route::get('/api/qr/generate', [QRController::class, 'generate'])->name('qr.generate');
+
+}); // End of security middleware group

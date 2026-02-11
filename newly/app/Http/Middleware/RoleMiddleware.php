@@ -13,28 +13,39 @@ class RoleMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (!auth()->check()) {
             return redirect()->route('login');
         }
 
         $user = auth()->user();
+        $hasRole = false;
 
-        // Check if user has the required role
-        if ($role === 'admin' && !$user->isAdmin()) {
-            abort(403, 'Unauthorized access.');
+        // Check if user has any of the required roles
+        foreach ($roles as $role) {
+            if ($role === 'admin' && $user->isAdmin()) {
+                $hasRole = true;
+                break;
+            }
+
+            if ($role === 'super_admin' && $user->isSuperAdmin()) {
+                $hasRole = true;
+                break;
+            }
+
+            if ($role === 'student' && $user->isStudent()) {
+                $hasRole = true;
+                break;
+            }
+
+            if ($role === 'guard' && $user->isGuard()) {
+                $hasRole = true;
+                break;
+            }
         }
 
-        if ($role === 'super_admin' && !$user->isSuperAdmin()) {
-            abort(403, 'Unauthorized access.');
-        }
-
-        if ($role === 'student' && !$user->isStudent()) {
-            abort(403, 'Unauthorized access.');
-        }
-
-        if ($role === 'guard' && !$user->isGuard()) {
+        if (!$hasRole) {
             abort(403, 'Unauthorized access.');
         }
 

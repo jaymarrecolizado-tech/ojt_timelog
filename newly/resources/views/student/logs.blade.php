@@ -51,7 +51,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($days as $day)
+                        @forelse($dayData as $day)
                             <tr>
                                 <td>{{ $day['date'] }}</td>
                                 <td>{{ $day['day_name'] }}</td>
@@ -83,6 +83,18 @@
                 </table>
             </div>
         </div>
+        @if($paginator->hasPages())
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Showing {{ $paginator->firstItem() ?? 0 }} to {{ $paginator->lastItem() ?? 0 }} of {{ $paginator->total() }} entries
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        {{ $paginator->links('pagination.bootstrap-5') }}
+                    </ul>
+                </nav>
+            </div>
+        @endif
     </div>
 </div>
 @endsection

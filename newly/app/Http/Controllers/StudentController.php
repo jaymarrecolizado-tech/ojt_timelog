@@ -5,12 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\TimeLog;
 use App\Models\Student;
 use App\Models\SystemSetting;
+use App\Constants\AppConstants;
+use App\Services\ScanTypeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class StudentController extends Controller
 {
+    protected ScanTypeService $scanTypeService;
+
+    public function __construct(ScanTypeService $scanTypeService)
+    {
+        $this->scanTypeService = $scanTypeService;
+    }
     public function dashboard()
     {
         $user = Auth::user();
@@ -44,8 +52,8 @@ class StudentController extends Controller
         }
 
         $remainingHours = max(0, $student->required_hours - $accumulatedHours);
-        $completionPercentage = $student->required_hours > 0 
-            ? min(100, round(($accumulatedHours / $student->required_hours) * 100, 1)) 
+        $completionPercentage = $student->required_hours > 0
+            ? min(AppConstants::MAX_COMPLETION_PERCENT, round(($accumulatedHours / $student->required_hours) * 100, 1))
             : 0;
 
         // Determine current status
@@ -75,20 +83,39 @@ class StudentController extends Controller
         
         $fromDate = $request->input('from_date', now()->startOfMonth()->toDateString());
         $toDate = $request->input('to_date', now()->endOfMonth()->toDateString());
+        
+        // Validate date range is not too large
+        $start = Carbon::parse($fromDate);
+        $end = Carbon::parse($toDate);
+        if ($start->diffInDays($end) > AppConstants::MAX_DATE_RANGE_DAYS) {
+            return back()->withErrors(['error' => 'Date range cannot exceed ' . AppConstants::MAX_DATE_RANGE_DAYS . ' days']);
+        }
 
+        // Paginate the results
+        $days = collect();
+        $current = $start->copy();
+
+        while ($current <= $end) {
+            $days->push($current->copy());
+            $current->addDay();
+        }
+
+        $perPage = AppConstants::PAGINATION_LOGS_STUDENT;
+        $currentPage = $request->input('page', 1);
+        $pagedDays = $days->forPage($currentPage, $perPage);
+        
+        // Get all logs for the date range
         $logs = TimeLog::where('student_id', $student->id)
             ->whereBetween('date', [$fromDate, $toDate])
             ->orderBy('date')
             ->orderBy('timestamp')
             ->get()
             ->groupBy('date');
-
-        $days = [];
-        $current = Carbon::parse($fromDate);
-        $end = Carbon::parse($toDate);
-
-        while ($current <= $end) {
-            $date = $current->toDateString();
+        
+        // Build day data for paginated days
+        $dayData = [];
+        foreach ($pagedDays as $day) {
+            $date = $day->toDateString();
             $dayLogs = $logs->get($date, collect());
             
             $hours = $this->calculateHoursForDay($dayLogs);
@@ -98,22 +125,28 @@ class StudentController extends Controller
             $pmIn = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'IN');
             $pmOut = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'OUT');
 
-            $dayData = [
-                'date' => $current->format('F d, Y'),
-                'day_name' => $current->format('l'),
+            $dayData[] = [
+                'date' => $day->format('F d, Y'),
+                'day_name' => $day->format('l'),
                 'am_in' => $amIn?->timestamp?->format('h:i A'),
                 'am_out' => $amOut?->timestamp?->format('h:i A'),
                 'pm_in' => $pmIn?->timestamp?->format('h:i A'),
                 'pm_out' => $pmOut?->timestamp?->format('h:i A'),
                 'hours' => $hours,
-                'status' => $this->getDayStatus($current, $dayLogs, $hours),
+                'status' => $this->getDayStatus($day, $dayLogs, $hours),
             ];
-
-            $days[] = $dayData;
-            $current->addDay();
         }
+        
+        // Create paginator
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $dayData,
+            $days->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
-        return view('student.logs', compact('days', 'fromDate', 'toDate'));
+        return view('student.logs', compact('dayData', 'fromDate', 'toDate', 'paginator'));
     }
 
     public function scan()
@@ -123,16 +156,14 @@ class StudentController extends Controller
             ->where('date', now()->toDateString())
             ->count();
 
-        if ($todayLogs >= 4) {
+        if ($todayLogs >= AppConstants::MAX_DAILY_SCANS) {
             return redirect()->route('student.dashboard')->with('info', 'You have completed all scans for today.');
         }
 
-        // Determine next scan type
-        $nextType = $this->getNextScanType($todayLogs);
-        
-        // Get active locations for scanning
+        $nextType = $this->scanTypeService->getNextScanType($todayLogs);
+
         $locations = \App\Models\Location::where('is_active', true)->get();
-        
+
         return view('student.scan', compact('nextType', 'locations'));
     }
 
@@ -170,18 +201,7 @@ class StudentController extends Controller
             return 'ABSENT';
         }
 
-        return $hours >= 7.5 ? 'COMPLETE' : 'INCOMPLETE';
+        return $hours >= AppConstants::REQUIRED_DAILY_HOURS ? 'COMPLETE' : 'INCOMPLETE';
     }
 
-    private function getNextScanType($logCount)
-    {
-        $types = [
-            0 => ['type' => 'IN', 'category' => 'AM', 'label' => 'AM IN'],
-            1 => ['type' => 'OUT', 'category' => 'AM', 'label' => 'AM OUT'],
-            2 => ['type' => 'IN', 'category' => 'PM', 'label' => 'PM IN'],
-            3 => ['type' => 'OUT', 'category' => 'PM', 'label' => 'PM OUT'],
-        ];
-
-        return $types[$logCount] ?? null;
-    }
 }

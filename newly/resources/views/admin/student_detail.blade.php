@@ -143,6 +143,18 @@
                         </table>
                     </div>
                 </div>
+                @if($logsPaginated->hasPages())
+                    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            Showing {{ $logsPaginated->firstItem() ?? 0 }} to {{ $logsPaginated->lastItem() ?? 0 }} of {{ $logsPaginated->total() }} entries
+                        </div>
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination mb-0">
+                                {{ $logsPaginated->links('pagination.bootstrap-5') }}
+                            </ul>
+                        </nav>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

@@ -39,12 +39,12 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="text-muted">Email</label>
-                            <p class="fw-bold">{{ $student->user->email }}</p>
+                            <label class="text-muted">School/University</label>
+                            <p class="fw-bold">{{ $student->school_university ?? 'Not set' }}</p>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-muted">Contact Number</label>
-                            <p class="fw-bold">{{ $student->contact_no ?? 'Not set' }}</p>
+                            <label class="text-muted">Email</label>
+                            <p class="fw-bold">{{ $student->user->email }}</p>
                         </div>
                     </div>
                 </div>
