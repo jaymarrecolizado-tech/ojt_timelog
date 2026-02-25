@@ -4,97 +4,10 @@ A web-based time log management system for tracking OJT student attendance via Q
 
 ## Tech Stack
 
-- **Backend**: FastAPI (Python)
-- **Frontend**: React + TypeScript + Vite
-- **Database**: MySQL
+- **Backend**: Laravel 10 (PHP)
+- **Frontend**: Blade Templates + Vite
+- **Database**: MySQL / SQLite
 - **Styling**: TailwindCSS
-
-## Project Structure
-
-```
-ojt_timelog/
-├── backend/                 # FastAPI backend
-│   ├── app/
-│   │   ├── api/routes/      # API endpoints
-│   │   ├── models/          # SQLAlchemy models
-│   │   ├── schemas/         # Pydantic schemas
-│   │   ├── services/        # Business logic (QR, etc.)
-│   │   ├── core/            # Config, database, security
-│   │   └── utils/           # Utility functions
-│   ├── migrations/          # SQL migration scripts
-│   └── requirements.txt     # Python dependencies
-│
-├── frontend/                # React frontend
-│   ├── src/
-│   │   ├── pages/           # Page components
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── lib/             # API client
-│   │   ├── types/           # TypeScript types
-│   │   └── utils/           # Utilities
-│   └── package.json         # Node dependencies
-│
-└── spec.txt                 # Full specification document
-```
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- Node.js 18+
-- MySQL 8.0+
-
-### 1. Database Setup
-
-```bash
-# Create MySQL database
-mysql -u root -p < backend/migrations/001_init_schema.sql
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Copy and configure environment
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Run development server
-uvicorn app.main:app --reload --port 8000
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-```
-
-### 4. Access the Application
-
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/api/docs
-
-## Default Login
-
-```
-Email: admin@ojt-tlms.local
-Password: Admin@123
-```
 
 ## Features
 
@@ -103,30 +16,141 @@ Password: Admin@123
 - **Guard Interface**: Display rotating QR codes
 - **Admin Dashboard**: Live attendance, student management, reports
 - **DTR Generation**: Monthly reports with hours calculation
+- **Security**: Rate limiting, account lockout, HMAC-signed QR tokens
 
-## API Endpoints
+## Project Structure
+
+```
+ojt_timelog/
+├── app/
+│   ├── Http/Controllers/   # Controllers
+│   ├── Models/             # Eloquent models
+│   ├── Services/           # Business logic (QR, PDF, etc.)
+│   └── Middleware/         # Custom middleware
+├── bootstrap/
+├── config/
+├── database/
+│   ├── migrations/         # Database migrations
+│   └── seeders/            # Seeders
+├── public/
+├── resources/
+│   ├── views/              # Blade templates
+│   ├── js/                 # JavaScript
+│   └── css/                # CSS
+├── routes/
+│   └── web.php             # Web routes
+├── storage/
+├── tests/
+├── artisan
+├── composer.json
+├── package.json
+└── vite.config.js
+```
+
+## Quick Start
+
+### Prerequisites
+
+- PHP 8.1+
+- Composer
+- Node.js 18+
+- MySQL 8.0+ (or SQLite for development)
+
+### 1. Install Dependencies
+
+```bash
+# Install PHP dependencies
+composer install
+
+# Install Node dependencies
+npm install
+```
+
+### 2. Configure Environment
+
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+
+# Edit .env with your database credentials
+```
+
+### 3. Setup Database
+
+```bash
+# Run migrations
+php artisan migrate
+
+# (Optional) Seed with test data
+php artisan db:seed
+```
+
+### 4. Run Development Server
+
+```bash
+# Start Laravel server
+php artisan serve
+
+# In another terminal, start Vite for assets
+npm run dev
+```
+
+### 5. Access the Application
+
+- **Application**: http://localhost:8000
+- **Admin Login**: Configure in `.env` or create via seeder
+
+## Default Login (after seeding)
+
+```
+Email: admin@ojt-tlms.local
+Password: Admin@123
+```
+
+## API Routes
 
 ### Auth
-- `POST /api/auth/register/student` - Register new student
-- `POST /api/auth/login` - Login
-- `POST /api/auth/logout` - Logout
-- `GET /api/auth/me` - Get current user
+- `GET /login` - Login page
+- `POST /login` - Login
+- `GET /register` - Registration page
+- `POST /register` - Register new student
+- `POST /logout` - Logout
 
 ### QR
-- `GET /api/qr/current` - Get current QR code (Guard/Admin)
-- `POST /api/qr/validate` - Validate scanned QR (Student)
+- `GET /qr/current` - Get current QR code (Guard/Admin)
+- `POST /qr/scan` - Validate scanned QR (Student)
 
 ### Logs
-- `GET /api/logs/today` - Today's logs
-- `GET /api/logs/range` - Logs by date range
-- `PUT /api/logs/{id}/override` - Admin override
-- `POST /api/logs/manual` - Manual entry
+- `GET /student/logs` - Student's logs
+- `POST /logs/manual` - Manual entry (Admin)
+- `PUT /logs/{id}/override` - Admin override
 
 ### Reports
-- `GET /api/reports/dtr` - DTR data
-- `GET /api/reports/summary` - Summary report
+- `GET /admin/reports/dtr` - DTR data
+- `GET /admin/reports/progress` - Progress report
 
 ### Admin
-- `GET /api/admin/dashboard/live` - Dashboard stats
-- `GET /api/admin/students` - List students
-- `PUT /api/admin/settings/{key}` - Update settings
+- `GET /admin/dashboard` - Dashboard stats
+- `GET /admin/students` - List students
+- `PUT /admin/settings/{key}` - Update settings
+
+## Testing
+
+```bash
+# Run tests
+php artisan test
+
+# Or with PHPUnit
+./vendor/bin/phpunit
+```
+
+## Deployment
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
+
+## License
+
+MIT
