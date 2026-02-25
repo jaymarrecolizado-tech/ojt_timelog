@@ -37,8 +37,8 @@
             <tr>
                 <td class="label">Program:</td>
                 <td>{{ $student->program }}</td>
-                <td class="label">Company:</td>
-                <td>{{ $student->company ?? 'N/A' }}</td>
+                <td class="label">School/University:</td>
+                <td>{{ $student->school_university ?? 'N/A' }}</td>
             </tr>
         </table>
     </div>

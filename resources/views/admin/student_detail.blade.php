@@ -13,16 +13,18 @@
                     <li class="breadcrumb-item active">{{ $student->full_name }}</li>
                 </ol>
             </nav>
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                 <h2 class="mb-0">{{ $student->full_name }}</h2>
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex flex-column flex-sm-row gap-2">
                     <form method="GET" class="d-flex align-items-center gap-2">
-                        <label for="month" class="form-label mb-0">Month:</label>
+                        <label for="month" class="form-label mb-0 text-nowrap">Month:</label>
                         <input type="month" id="month" name="month" class="form-control" value="{{ $month ?? now()->format('Y-m') }}" style="width: 180px;">
-                        <button type="submit" class="btn btn-outline-primary">View</button>
+                        <button type="submit" class="btn btn-outline-primary text-nowrap">
+                            <i class="bi bi-calendar3 me-1"></i>View
+                        </button>
                     </form>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editStudentModal">
-                        <i class="bi bi-pencil me-2"></i>Edit
+                    <button class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#editStudentModal">
+                        <i class="bi bi-pencil me-1"></i>Edit
                     </button>
                 </div>
             </div>
@@ -157,11 +159,7 @@
                         <div class="text-muted small">
                             Showing {{ $logsPaginated->firstItem() ?? 0 }} to {{ $logsPaginated->lastItem() ?? 0 }} of {{ $logsPaginated->total() }} entries
                         </div>
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination mb-0">
-                                {{ $logsPaginated->links() }}
-                            </ul>
-                        </nav>
+                        {{ $logsPaginated->links('vendor.pagination.bootstrap-5') }}
                     </div>
                 @endif
             </div>
