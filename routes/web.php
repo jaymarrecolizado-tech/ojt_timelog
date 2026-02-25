@@ -99,6 +99,13 @@ Route::middleware(['auth', 'role:admin,guard'])->prefix('admin')->name('admin.')
     });
 });
 
+// Guard Routes
+Route::middleware(['auth', 'role:guard'])->prefix('guard')->name('guard.')->group(function () {
+    Route::get('/dashboard', [QRController::class, 'guardQR'])->name('dashboard');
+    Route::get('/qr', [QRController::class, 'guardQR'])->name('qr');
+    Route::get('/qr/refresh', [QRController::class, 'guardRefresh'])->name('qr.refresh');
+});
+
 // QR API Routes
 Route::post('/api/qr/validate', [QRController::class, 'validate'])->name('qr.validate');
 Route::get('/api/qr/generate', [QRController::class, 'generate'])->name('qr.generate');

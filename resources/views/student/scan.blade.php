@@ -169,9 +169,23 @@
     });
 
     async function onScanSuccess(decodedText) {
-        // Get selected location
+        // Parse QR data (JSON format: {token, location_id, timestamp})
+        let qrToken = decodedText;
+        let qrLocationId = null;
+        
+        try {
+            const qrData = JSON.parse(decodedText);
+            if (qrData.token) {
+                qrToken = qrData.token;
+                qrLocationId = qrData.location_id;
+            }
+        } catch (e) {
+            // If not JSON, use decodedText as token directly
+        }
+        
+        // Get selected location (prefer QR location if available)
         const locationSelect = document.getElementById('location-select');
-        const locationId = locationSelect ? locationSelect.value : null;
+        const locationId = qrLocationId || (locationSelect ? locationSelect.value : null);
         
         if (!locationId) {
             statusDiv.className = 'alert alert-warning';
@@ -195,7 +209,7 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    token: decodedText,
+                    token: qrToken,
                     student_id: '{{ auth()->user()->student->id }}',
                     location_id: locationId
                 })

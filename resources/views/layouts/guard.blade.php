@@ -56,12 +56,15 @@
             <div class="col-md-2 sidebar p-4">
                 <h4 class="text-white mb-4"><i class="bi bi-shield-check"></i> Guard</h4>
                 <nav class="nav flex-column">
-                    <a class="nav-link active" href="/guard/dashboard">
+                    <a class="nav-link active" href="{{ route('guard.dashboard') }}">
                         <i class="bi bi-qr-code me-2"></i> QR Code
                     </a>
-                    <a class="nav-link" href="/logout">
-                        <i class="bi bi-box-arrow-right me-2"></i> Logout
-                    </a>
+                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="nav-link btn btn-link text-start w-100">
+                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                        </button>
+                    </form>
                 </nav>
             </div>
 
