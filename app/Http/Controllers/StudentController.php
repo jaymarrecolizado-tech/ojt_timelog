@@ -189,7 +189,8 @@ class StudentController extends Controller
             $hours += $pmIn->timestamp->diffInHours($pmOut->timestamp);
         }
 
-        return $hours;
+        // Cap daily hours at 8
+        return min($hours, 8);
     }
 
     private function getDayStatus($date, $logs, $hours)

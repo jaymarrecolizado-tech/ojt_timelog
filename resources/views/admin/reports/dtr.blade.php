@@ -62,10 +62,12 @@
                     $amOut = $dayLogs->first(fn($log) => $log->log_category === 'AM' && $log->log_type === 'OUT');
                     $pmIn = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'IN');
                     $pmOut = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'OUT');
-                    
+
                     $hours = 0;
                     if ($amIn && $amOut) $hours += $amIn->timestamp->diffInHours($amOut->timestamp);
                     if ($pmIn && $pmOut) $hours += $pmIn->timestamp->diffInHours($pmOut->timestamp);
+                    // Cap daily hours at 8
+                    $hours = min($hours, 8);
                     $totalHours += $hours;
                 @endphp
                 <tr>

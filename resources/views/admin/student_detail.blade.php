@@ -130,11 +130,13 @@
                                         $amOut = $dayLogs->first(fn($log) => $log->log_category === 'AM' && $log->log_type === 'OUT');
                                         $pmIn = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'IN');
                                         $pmOut = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'OUT');
-                                        
+
                                         $hours = 0;
                                         if ($amIn && $amOut) $hours += \Carbon\Carbon::parse($amIn->timestamp)->diffInHours(\Carbon\Carbon::parse($amOut->timestamp));
                                         if ($pmIn && $pmOut) $hours += \Carbon\Carbon::parse($pmIn->timestamp)->diffInHours(\Carbon\Carbon::parse($pmOut->timestamp));
-                                        
+                                        // Cap daily hours at 8
+                                        $hours = min($hours, 8);
+
                                         $displayDate = \Carbon\Carbon::parse(explode(' ', $date)[0])->format('M d, Y');
                                     @endphp
                                     <tr>

@@ -2,27 +2,52 @@
 
 @section('content')
 <div class="row justify-content-center">
-    <div class="col-md-8 text-center">
-        <h2 class="mb-3">Guard QR Code</h2>
-        <p class="text-muted mb-4">Students scan this to clock in/out</p>
+    <div class="col-xl-8 col-lg-10">
+        <h1 class="page-title">Guard QR Code Station</h1>
+        <p class="page-subtitle">Students scan this QR code to clock in or out</p>
 
-        <div class="card mb-4">
-            <div class="card-body">
+        <div class="card">
+            <div class="card-body text-center py-5">
                 <div class="qr-container mb-4">
                     <canvas id="qrcode"></canvas>
                 </div>
 
-                <div class="timer mb-3" id="timer">
+                <div class="timer-display mb-3" id="timer">
                     Refreshing in 30s
                 </div>
 
-                <div class="badge bg-success fs-6 mb-3">
-                    <i class="bi bi-check-circle"></i> Active Session
+                <div class="d-flex justify-content-center align-items-center gap-3 mb-4">
+                    <span class="badge badge-success fs-6 px-4 py-2">
+                        <i class="bi bi-check-circle-fill me-2"></i> Active Session
+                    </span>
                 </div>
 
-                <p class="text-muted">
-                    Scan with student app to record attendance
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Students should scan with their mobile app to record attendance
                 </p>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="info-card">
+                    <h6><i class="bi bi-clock-history me-1"></i> Auto Refresh</h6>
+                    <h3>30s</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card">
+                    <h6><i class="bi bi-geo-alt me-1"></i> Location</h6>
+                    <h3>{{ auth()->user()->location ? auth()->user()->location->name : 'Default' }}</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card">
+                    <h6><i class="bi bi-shield-check me-1"></i> Status</h6>
+                    <h3 class="text-success">Active</h3>
+                </div>
             </div>
         </div>
     </div>
@@ -33,37 +58,28 @@
 <script>
     let countdown = 30;
     let qrData = null;
-    
-    console.log('Guard QR page loaded');
 
     async function generateQR(data) {
-        console.log('Generating QR with data:', data);
         const canvas = document.getElementById('qrcode');
-        
+
         try {
             await QRCode.toCanvas(canvas, data, {
-                width: 200,
+                width: 280,
                 margin: 2,
                 color: {
-                    dark: '#000000',
+                    dark: '#1e293b',
                     light: '#ffffff'
                 }
             });
-            console.log('QR Code generated successfully');
         } catch (err) {
             console.error('Error generating QR:', err);
         }
     }
 
     function refreshQR() {
-        console.log('Refreshing QR...');
         fetch('/guard/qr/refresh')
-            .then(response => {
-                console.log('Response status:', response.status);
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('QR Refresh data:', data);
                 if (data.token) {
                     qrData = JSON.stringify({
                         token: data.token,
@@ -85,9 +101,9 @@
     function updateTimer() {
         const timerEl = document.getElementById('timer');
         timerEl.textContent = 'Refreshing in ' + countdown + 's';
-        
+
         timerEl.classList.remove('timer-warning', 'timer-danger');
-        
+
         if (countdown <= 5) {
             timerEl.classList.add('timer-danger');
         } else if (countdown <= 10) {
@@ -95,7 +111,7 @@
         }
 
         countdown--;
-        
+
         if (countdown >= 0) {
             setTimeout(updateTimer, 1000);
         } else {
@@ -104,7 +120,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, starting QR refresh');
         setTimeout(refreshQR, 500);
     });
 </script>

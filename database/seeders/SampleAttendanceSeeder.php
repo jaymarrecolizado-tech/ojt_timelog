@@ -155,7 +155,7 @@ class SampleAttendanceSeeder extends Seeder
     private function createTimeLogs(array $students): void
     {
         $startDate = now()->parse('2026-02-01');
-        $endDate = now()->parse('2026-02-24');
+        $endDate = now()->parse('2026-02-28');
 
         foreach ($students as $student) {
             $currentDate = $startDate->copy();
