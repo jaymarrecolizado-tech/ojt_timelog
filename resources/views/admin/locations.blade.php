@@ -15,16 +15,18 @@
         </div>
     </div>
 
-    @if($locations->count() > 0)
     <div class="card mb-4">
         <div class="card-header bg-white">
             <h6 class="mb-0"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Location Map</h6>
         </div>
         <div class="card-body">
             <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+            <small class="text-muted mt-2 d-block">
+                <i class="bi bi-info-circle me-1"></i>
+                Showing active scan locations. Click on a marker to see details.
+            </small>
         </div>
     </div>
-    @endif
 
     <div class="row g-4">
         @forelse($locations as $location)
@@ -155,8 +157,10 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Location data from server
-    const locations = {{ json_encode($locations->map(function($loc) {
+    // Location data from server - only active locations with coordinates
+    const locations = {{ json_encode($locations->filter(function($loc) {
+        return $loc->is_active && $loc->latitude && $loc->longitude;
+    })->map(function($loc) {
         return [
             'id' => $loc->id,
             'name' => $loc->name,
@@ -166,8 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'radius' => $loc->radius_meters,
             'active' => $loc->is_active
         ];
-    })->filter(function($loc) {
-        return $loc['lat'] && $loc['lng'];
     })->values()) }};
 
     const defaultLat = locations.length > 0 ? locations[0].lat : 17.8;
