@@ -5,7 +5,7 @@
     <title>OJT Progress Report</title>
     <style>
         @page {
-            margin: 15mm 15mm 15mm 15mm;
+            margin: 10mm 10mm 10mm 10mm;
             size: A4 landscape;
         }
         * {
@@ -13,94 +13,68 @@
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 9px;
             margin: 0;
             padding: 0;
-            width: 280mm;
         }
         .header {
             text-align: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #333;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #333;
         }
         .header h1 {
-            font-size: 18px;
-            margin: 0 0 5px 0;
+            font-size: 14px;
+            margin: 0 0 3px 0;
             text-transform: uppercase;
-            letter-spacing: 2px;
             font-weight: bold;
         }
         .header p {
             color: #666;
-            margin: 2px 0;
-            font-size: 9px;
+            margin: 0;
+            font-size: 8px;
         }
         .summary {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin: 12px 0;
-            padding: 15px 20px;
+            gap: 8px;
+            margin: 5px 0 8px 0;
+            padding: 6px 12px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 4px;
         }
         .summary-item {
             text-align: center;
             flex: 1;
-            padding: 12px 10px;
+            padding: 6px 8px;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 6px;
-            min-width: 100px;
-            position: relative;
-            overflow: hidden;
-        }
-        .summary-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-        }
-        .summary-item.students::before { background: #3182ce; }
-        .summary-item.active::before { background: #38a169; }
-        .summary-item.completed::before { background: #805ad5; }
-        .summary-item.hours::before { background: #dd6b20; }
-        .summary-item.progress::before { background: #e53e3e; }
-
-        .summary-item .icon {
-            font-size: 20px;
-            margin-bottom: 5px;
-            display: block;
-            opacity: 0.8;
+            border-radius: 3px;
+            min-width: 70px;
         }
         .summary-item .number {
-            font-size: 28px;
+            font-size: 16px;
             font-weight: bold;
             color: #1a365d;
             line-height: 1;
             display: block;
-            margin-bottom: 3px;
         }
         .summary-item .label {
-            font-size: 8px;
+            font-size: 6px;
             color: #4a5568;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             font-weight: 600;
             display: block;
+            margin-top: 2px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
-            font-size: 9px;
+            font-size: 8px;
         }
         th, td {
             border: 1px solid #2d3748;
-            padding: 5px 4px;
+            padding: 4px 3px;
             text-align: left;
             vertical-align: middle;
         }
@@ -108,37 +82,36 @@
             background-color: #edf2f7;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 7px;
+            font-size: 6px;
             letter-spacing: 0.5px;
             color: #1a202c;
         }
         tr:nth-child(even) {
             background-color: #f7fafc;
         }
-        .col-id { width: 35px; text-align: center; }
-        .col-student-id { width: 70px; }
-        .col-name { width: 110px; }
-        .col-dept { width: 95px; }
-        .col-days { width: 35px; text-align: center; }
-        .col-hours { width: 45px; text-align: center; }
-        .col-required { width: 45px; text-align: center; }
-        .col-remaining { width: 50px; text-align: center; }
-        .col-progress { width: 95px; }
-        .col-est { width: 70px; }
-        .col-status { width: 60px; text-align: center; }
+        .col-id { width: 25px; text-align: center; }
+        .col-student-id { width: 55px; }
+        .col-name { width: 100px; }
+        .col-dept { width: 85px; }
+        .col-days { width: 30px; text-align: center; }
+        .col-hours { width: 35px; text-align: center; }
+        .col-required { width: 35px; text-align: center; }
+        .col-remaining { width: 40px; text-align: center; }
+        .col-progress { width: 80px; }
+        .col-est { width: 60px; }
+        .col-status { width: 50px; text-align: center; }
 
         .progress-container {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 3px;
         }
         .progress-bar-bg {
             background-color: #e2e8f0;
-            height: 10px;
+            height: 8px;
             border-radius: 2px;
             flex: 1;
-            min-width: 40px;
-            overflow: hidden;
+            min-width: 30px;
         }
         .progress-bar-fill {
             height: 100%;
@@ -150,52 +123,51 @@
         .progress-fill.complete { background-color: #3182ce; }
         .percentage-text {
             font-weight: bold;
-            font-size: 8px;
-            min-width: 32px;
+            font-size: 7px;
+            min-width: 28px;
             text-align: right;
         }
         .status-badge {
             display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 7px;
+            padding: 2px 5px;
+            border-radius: 2px;
+            font-size: 6px;
             font-weight: bold;
             text-transform: uppercase;
-            white-space: nowrap;
         }
         .status-active { background-color: #c6f6d5; color: #22543d; }
         .status-completed { background-color: #bee3f8; color: #2a4365; }
         .status-inactive { background-color: #fed7d7; color: #742a2a; }
         .status-pending { background-color: #fefcbf; color: #744210; }
         .footer {
-            margin-top: 15px;
-            padding-top: 10px;
+            margin-top: 8px;
+            padding-top: 5px;
             border-top: 1px solid #cbd5e0;
             text-align: center;
-            font-size: 8px;
+            font-size: 7px;
             color: #718096;
         }
         .legend {
-            margin-top: 8px;
-            padding: 6px 10px;
+            margin-top: 5px;
+            padding: 4px 8px;
             background-color: #f7fafc;
             border: 1px solid #e2e8f0;
-            font-size: 7px;
+            font-size: 6px;
         }
         .legend span {
             display: inline-block;
-            margin-right: 15px;
+            margin-right: 10px;
         }
         .legend-color {
             display: inline-block;
-            width: 10px;
-            height: 10px;
-            margin-right: 3px;
+            width: 8px;
+            height: 8px;
+            margin-right: 2px;
             vertical-align: middle;
-            border-radius: 2px;
+            border-radius: 1px;
         }
-        .text-completed { color: #38a169; font-weight: bold; font-size: 8px; }
-        .text-na { color: #a0aec0; font-size: 8px; }
+        .text-completed { color: #38a169; font-weight: bold; font-size: 7px; }
+        .text-na { color: #a0aec0; font-size: 7px; }
     </style>
 </head>
 <body>
@@ -204,7 +176,7 @@
         <p>As of {{ now()->format('F d, Y') }} | Generated: {{ now()->format('F d, Y h:i A') }}</p>
     </div>
 
-    {{-- Summary Section - Infographic Style --}}
+    {{-- Summary Section - Compact --}}
     @php
         $totalStudents = $students->count();
         $activeStudents = $students->where('status', 'active')->count();
@@ -214,30 +186,25 @@
     @endphp
 
     <div class="summary">
-        <div class="summary-item students">
-            <span class="icon">👥</span>
+        <div class="summary-item">
             <span class="number">{{ $totalStudents }}</span>
-            <span class="label">Total Students</span>
+            <span class="label">Total</span>
         </div>
-        <div class="summary-item active">
-            <span class="icon">📗</span>
+        <div class="summary-item">
             <span class="number">{{ $activeStudents }}</span>
             <span class="label">Active</span>
         </div>
-        <div class="summary-item completed">
-            <span class="icon">✓</span>
+        <div class="summary-item">
             <span class="number">{{ $completedStudents }}</span>
-            <span class="label">Completed</span>
+            <span class="label">Done</span>
         </div>
-        <div class="summary-item hours">
-            <span class="icon">⏱</span>
+        <div class="summary-item">
             <span class="number">{{ number_format($totalHoursCompleted) }}</span>
-            <span class="label">Total Hours</span>
+            <span class="label">Hours</span>
         </div>
-        <div class="summary-item progress">
-            <span class="icon">📊</span>
+        <div class="summary-item">
             <span class="number">{{ number_format($avgPercentage, 1) }}%</span>
-            <span class="label">Avg Progress</span>
+            <span class="label">Progress</span>
         </div>
     </div>
 
@@ -246,11 +213,11 @@
         <thead>
             <tr>
                 <th class="col-id">#</th>
-                <th class="col-student-id">ID</th>
-                <th class="col-name">Name</th>
+                <th class="col-student-id">ID No</th>
+                <th class="col-name">Student Name</th>
                 <th class="col-dept">Department</th>
                 <th class="col-days">Days</th>
-                <th class="col-hours">Hours</th>
+                <th class="col-hours">Hrs</th>
                 <th class="col-required">Req</th>
                 <th class="col-remaining">Left</th>
                 <th class="col-progress">Progress</th>
@@ -280,25 +247,25 @@
                             <div class="progress-bar-bg">
                                 <div class="progress-bar-fill {{ $progressClass }}" style="width: {{ min(100, $student->percentage) }}%"></div>
                             </div>
-                            <span class="percentage-text">{{ number_format($student->percentage, 1) }}%</span>
+                            <span class="percentage-text">{{ number_format($student->percentage, 0) }}%</span>
                         </div>
                     </td>
                     <td class="col-est">
                         @if($student->remaining_hours <= 0)
-                            <span class="text-completed">Completed</span>
+                            <span class="text-completed">Done</span>
                         @elseif($student->estimated_completion)
-                            <span style="font-size: 8px;">{{ $student->estimated_completion->format('M d') }}</span>
+                            <span style="font-size: 7px;">{{ $student->estimated_completion->format('M d') }}</span>
                         @else
-                            <span class="text-na">N/A</span>
+                            <span class="text-na">-</span>
                         @endif
                     </td>
                     <td class="col-status">
-                        <span class="status-badge {{ $statusClass }}">{{ ucfirst($student->status) }}</span>
+                        <span class="status-badge {{ $statusClass }}">{{ ucfirst(substr($student->status, 0, 4)) }}</span>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="11" style="text-align: center; padding: 20px; color: #a0aec0; font-style: italic;">No students found</td>
+                    <td colspan="11" style="text-align: center; padding: 15px; color: #a0aec0; font-style: italic;">No students found</td>
                 </tr>
             @endforelse
         </tbody>
@@ -307,9 +274,9 @@
     {{-- Legend --}}
     <div class="legend">
         <strong>Progress:</strong>
-        <span><span class="legend-color" style="background-color: #e53e3e;"></span>&lt; 30%</span>
+        <span><span class="legend-color" style="background-color: #e53e3e;"></span>&lt;30%</span>
         <span><span class="legend-color" style="background-color: #dd6b20;"></span>30-70%</span>
-        <span><span class="legend-color" style="background-color: #38a169;"></span>&gt; 70%</span>
+        <span><span class="legend-color" style="background-color: #38a169;"></span>&gt;70%</span>
         <span><span class="legend-color" style="background-color: #3182ce;"></span>100%</span>
     </div>
 
