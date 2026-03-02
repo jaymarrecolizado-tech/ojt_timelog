@@ -160,35 +160,35 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Prepare location data
+    // Location data
     var locationData = [
         @foreach($locations as $index => $loc)
+        @if($loc->latitude && $loc->longitude)
         {
             index: {{ $index }},
-            name: {{ Illuminate\Support\Js::encode($loc->name) }},
-            lat: {{ $loc->latitude ? 'parseFloat(' . $loc->latitude . ')' : 'null' }},
-            lng: {{ $loc->longitude ? 'parseFloat(' . $loc->longitude . ')' : 'null' }},
+            name: "{{ $loc->name }}",
+            lat: {{ number_format($loc->latitude, 8) }},
+            lng: {{ number_format($loc->longitude, 8) }},
             radius: {{ $loc->radius_meters }},
-            active: {{ $loc->is_active ? 'true' : 'false' }},
-            hasCoords: {{ ($loc->latitude && $loc->longitude) ? 'true' : 'false' }}
+            active: {{ $loc->is_active ? 'true' : 'false' }}
         }@if(!$loop->last),@endif
+        @endif
         @endforeach
     ];
 
-    var mappableLocations = locationData.filter(function(loc) { return loc.hasCoords; });
-    var defaultLat = mappableLocations.length > 0 ? mappableLocations[0].lat : 17.8;
-    var defaultLng = mappableLocations.length > 0 ? mappableLocations[0].lng : 121.8;
+    var defaultLat = locationData.length > 0 ? locationData[0].lat : 17.8;
+    var defaultLng = locationData.length > 0 ? locationData[0].lng : 121.8;
 
     // Main map
-    if (document.getElementById('map') && typeof L !== 'undefined') {
-        var mainMap = L.map('map').setView([defaultLat, defaultLng], mappableLocations.length > 0 ? 13 : 9);
+    if (document.getElementById('map')) {
+        var mainMap = L.map('map').setView([defaultLat, defaultLng], locationData.length > 0 ? 13 : 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(mainMap);
 
-        for (var i = 0; i < mappableLocations.length; i++) {
-            var loc = mappableLocations[i];
+        for (var i = 0; i < locationData.length; i++) {
+            var loc = locationData[i];
             L.marker([loc.lat, loc.lng]).addTo(mainMap)
                 .bindPopup('<strong>' + loc.name + '</strong><br>Radius: ' + loc.radius + 'm');
 
@@ -199,27 +199,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 radius: loc.radius
             }).addTo(mainMap);
         }
-
-        if (mappableLocations.length > 1) {
-            var group = L.featureGroup(mappableLocations.map(function(loc) {
-                return L.marker([loc.lat, loc.lng]);
-            }));
-            mainMap.fitBounds(group.getBounds().pad(0.1));
-        }
     }
 
     // Mini maps for cards
-    for (var i = 0; i < locationData.length; i++) {
-        var loc = locationData[i];
-        if (!loc.hasCoords) continue;
-        var mapEl = document.getElementById('locationMap' + loc.index);
-        if (mapEl && typeof L !== 'undefined') {
+    @foreach($locations as $index => $loc)
+    @if($loc->latitude && $loc->longitude)
+    (function() {
+        var mapEl = document.getElementById('locationMap{{ $loop->index }}');
+        if (mapEl) {
             L.map(mapEl, { zoomControl: false, scrollWheelZoom: false })
-                .setView([loc.lat, loc.lng], 15)
+                .setView([{{ number_format($loc->latitude, 8) }}, {{ number_format($loc->longitude, 8) }}], 15)
                 .addLayer(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'))
-                .addLayer(L.marker([loc.lat, loc.lng]));
+                .addLayer(L.marker([{{ number_format($loc->latitude, 8) }}, {{ number_format($loc->longitude, 8) }}]));
         }
-    }
+    })();
+    @endif
+    @endforeach
 
     // Modal map
     var modalMap = null;
