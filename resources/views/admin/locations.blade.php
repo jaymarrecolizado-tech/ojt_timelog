@@ -2,58 +2,57 @@
 
 @section('title', 'Locations')
 
-@push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-    #map {
-        height: 400px;
-        width: 100%;
-        border-radius: 8px;
-        border: 2px solid #e2e8f0;
-    }
-    #modalMap {
-        height: 300px;
-        width: 100%;
-        border-radius: 6px;
-        border: 1px solid #cbd5e0;
-        margin-bottom: 10px;
-    }
-    .leaflet-popup-content {
-        margin: 8px 12px;
-        font-size: 13px;
-    }
-    .location-card-map {
-        height: 150px;
-        border-radius: 6px;
-        margin-bottom: 10px;
-        border: 1px solid #e2e8f0;
-    }
-    .map-instructions {
-        background-color: #f0f9ff;
-        border: 1px solid #bae6fd;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin-bottom: 12px;
-        font-size: 13px;
-    }
-    .map-instructions i {
-        color: #0284c7;
-    }
-    .coordinates-badge {
-        display: inline-block;
-        background-color: #f1f5f9;
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        padding: 4px 10px;
-        font-size: 12px;
-        font-family: monospace;
-        margin-top: 8px;
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="container">
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            z-index: 1;
+        }
+        #modalMap {
+            height: 300px;
+            width: 100%;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+            margin-bottom: 10px;
+            z-index: 1;
+        }
+        .leaflet-popup-content {
+            margin: 8px 12px;
+            font-size: 13px;
+        }
+        .location-card-map {
+            height: 150px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #e2e8f0;
+            z-index: 1;
+        }
+        .map-instructions {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .coordinates-badge {
+            display: inline-block;
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-family: monospace;
+            margin-top: 8px;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <div class="row mb-4">
         <div class="col">
             <h2>Scan Locations</h2>
@@ -152,6 +151,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
                     <div class="mb-3">
                         <label class="form-label">Location Name</label>
                         <input type="text" name="name" class="form-control" required placeholder="e.g., Main Office, Building A">
@@ -200,14 +201,12 @@
 @endsection
 
 @push('scripts')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // Main map showing all locations
 let mainMap = null;
 let modalMap = null;
 let markers = [];
-let locationMarkers = [];
 let modalMarker = null;
 
 @php
@@ -233,7 +232,8 @@ const locations = {{ json_encode($locationData) }};
 
 // Initialize main map
 function initMainMap() {
-    if (locations.length === 0) return;
+    const mapElement = document.getElementById('map');
+    if (!mapElement || locations.length === 0) return;
 
     mainMap = L.map('map').setView([{{ $defaultLat }}, {{ $defaultLng }}], 13);
 
@@ -270,6 +270,9 @@ function initMainMap() {
 
 // Initialize modal map for picking location
 function initModalMap() {
+    const mapElement = document.getElementById('modalMap');
+    if (!mapElement) return;
+
     modalMap = L.map('modalMap').setView([{{ $defaultLat }}, {{ $defaultLng }}], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -326,18 +329,19 @@ function initLocationCardMaps() {
 }
 
 // Initialize maps when modal is shown
-document.getElementById('addLocationModal').addEventListener('shown.bs.modal', function() {
-    if (!modalMap) {
-        initModalMap();
-    } else {
-        modalMap.invalidateSize();
-    }
-});
-
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initMainMap();
     initLocationCardMaps();
+});
+
+document.getElementById('addLocationModal').addEventListener('shown.bs.modal', function() {
+    setTimeout(function() {
+        if (!modalMap) {
+            initModalMap();
+        } else {
+            modalMap.invalidateSize();
+        }
+    }, 300);
 });
 </script>
 @endpush
