@@ -113,21 +113,45 @@
         }
         .progress-bar-bg {
             background-color: #e2e8f0;
-            height: 14px;
-            border-radius: 7px;
+            height: 16px;
+            border-radius: 8px;
             flex: 1;
-            min-width: 45px;
+            min-width: 50px;
             position: relative;
             overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
         }
         .progress-bar-fill {
             height: 100%;
-            border-radius: 7px;
+            border-radius: 8px;
+            position: relative;
+            transition: width 0.3s ease;
         }
-        .progress-fill.low { background-color: #fc8181; }
-        .progress-fill.medium { background-color: #f6ad55; }
-        .progress-fill.high { background-color: #68d391; }
-        .progress-fill.complete { background-color: #4299e1; }
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+        }
+        .progress-fill.low {
+            background-color: #e53e3e;
+            background-image: repeating-linear-gradient(45deg, #c53030 0px, #c53030 10px, #e53e3e 10px, #e53e3e 20px);
+        }
+        .progress-fill.medium {
+            background-color: #dd6b20;
+            background-image: repeating-linear-gradient(45deg, #c05621 0px, #c05621 10px, #dd6b20 10px, #dd6b20 20px);
+        }
+        .progress-fill.high {
+            background-color: #38a169;
+            background-image: repeating-linear-gradient(45deg, #276749 0px, #276749 10px, #38a169 10px, #38a169 20px);
+        }
+        .progress-fill.complete {
+            background-color: #3182ce;
+            background-image: repeating-linear-gradient(45deg, #2c5282 0px, #2c5282 10px, #3182ce 10px, #3182ce 20px);
+        }
         .percentage-text {
             font-weight: bold;
             font-size: 9px;
@@ -137,7 +161,7 @@
         .percentage-low { color: #c53030; }
         .percentage-medium { color: #c05621; }
         .percentage-high { color: #276749; }
-        .percentage-complete { color: #2b6cb0; }
+        .percentage-complete { color: #2c5282; }
         .status-badge {
             display: inline-block;
             padding: 4px 10px;
