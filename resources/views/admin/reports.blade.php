@@ -11,6 +11,21 @@
     </div>
 
     <div class="row g-4">
+        <!-- Bulk DTR Report -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-files me-2"></i>Bulk DTR Generation</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">Generate Daily Time Records for multiple students at once with filters by school, department, status, and date range.</p>
+                    <a href="{{ route('admin.reports.bulk-dtr') }}" class="btn btn-primary mt-2">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Go to Bulk DTR
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <!-- DTR Report -->
         <div class="col-md-6">
             <div class="card h-100">

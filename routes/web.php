@@ -89,6 +89,10 @@ Route::middleware(['auth', 'role:admin,guard'])->prefix('admin')->name('admin.')
     
     // Reports
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+    Route::get('/reports/bulk-dtr', [AdminController::class, 'bulkDTRForm'])->name('reports.bulk-dtr');
+    Route::post('/reports/bulk-dtr/generate', [AdminController::class, 'generateBulkDTR'])
+        ->middleware(['throttle:10,30'])
+        ->name('reports.bulk-dtr.generate');
     
     // Settings (Super Admin only)
     Route::middleware(['role:super_admin'])->group(function () {

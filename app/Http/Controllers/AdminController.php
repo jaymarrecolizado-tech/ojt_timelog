@@ -234,6 +234,181 @@ class AdminController extends Controller
         return view('admin.reports');
     }
 
+    public function bulkDTRForm()
+    {
+        $schools = Student::distinct()
+            ->whereNotNull('school_university')
+            ->where('school_university', '!=', '')
+            ->pluck('school_university')
+            ->sort()
+            ->values();
+
+        $departments = Student::distinct()
+            ->whereNotNull('department')
+            ->where('department', '!=', '')
+            ->pluck('department')
+            ->sort()
+            ->values();
+
+        return view('admin.reports.bulk_dtr', compact('schools', 'departments'));
+    }
+
+    /**
+     * Generate bulk Daily Time Records for multiple students
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public function generateBulkDTR(Request $request)
+    {
+        $validated = $request->validate([
+            'school_university' => 'nullable|string|max:255|regex:/^[\w\s\-.,\']+$/',
+            'department' => 'nullable|string|max:255|regex:/^[\w\s\-.,\']+$/',
+            'status' => 'nullable|in:active,completed,inactive,pending',
+            'from_date' => 'required|date|before_or_equal:to_date|after:-2 years',
+            'to_date' => 'required|date|after_or_equal:from_date|before:+1 year',
+            'output_format' => 'required|in:single,zip',
+        ], [
+            'from_date.after' => 'Date range cannot start more than 2 years ago.',
+            'to_date.before' => 'Date range cannot extend more than 1 year into the future.',
+        ]);
+
+        $fromDate = Carbon::parse($validated['from_date']);
+        $toDate = Carbon::parse($validated['to_date']);
+        $daysDiff = $fromDate->diffInDays($toDate);
+
+        // Limit single PDF to 90 days max
+        if ($daysDiff > 90 && $validated['output_format'] === 'single') {
+            return back()->withInput()->with('error', 'Single PDF format is limited to 90 days. Use ZIP format for longer ranges.');
+        }
+
+        $query = Student::query();
+
+        if (!empty($validated['school_university'])) {
+            $query->where('school_university', $validated['school_university']);
+        }
+
+        if (!empty($validated['department'])) {
+            $query->where('department', $validated['department']);
+        }
+
+        if (!empty($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+
+        // Limit to 500 students max to prevent memory issues
+        $students = $query->orderBy('last_name')->orderBy('first_name')->limit(500)->get();
+
+        if ($students->isEmpty()) {
+            return back()->withInput()->with('error', 'No students found matching the selected criteria.');
+        }
+
+        if ($students->count() >= 500) {
+            return back()->withInput()->with('warning', 'Results limited to 500 students. Please refine your filters for better results.');
+        }
+
+        // Fix N+1 query: Load all logs at once instead of per-student queries
+        $studentIds = $students->pluck('id');
+        $allLogs = TimeLog::whereIn('student_id', $studentIds)
+            ->whereBetween('date', [$validated['from_date'], $validated['to_date']])
+            ->orderBy('date')
+            ->orderBy('timestamp')
+            ->get()
+            ->groupBy('student_id');
+
+        foreach ($students as $student) {
+            $student->logs = $allLogs->get($student->id, collect())->groupBy('date');
+        }
+
+        $fromDateStr = $validated['from_date'];
+        $toDateStr = $validated['to_date'];
+
+        if ($validated['output_format'] === 'single') {
+            return $this->generateCombinedPDF($students, $fromDateStr, $toDateStr);
+        }
+
+        return $this->generateZIPDTR($students, $fromDateStr, $toDateStr);
+    }
+
+    /**
+     * Generate combined PDF with all students
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $students
+     * @param string $fromDate
+     * @param string $toDate
+     * @return \Illuminate\Http\Response
+     */
+    private function generateCombinedPDF($students, $fromDate, $toDate)
+    {
+        $pdf = PDF::loadView('admin.reports.bulk_dtr_pdf', compact('students', 'fromDate', 'toDate'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download("Bulk_DTR_{$fromDate}_to_{$toDate}.pdf");
+    }
+
+    /**
+     * Generate ZIP file with individual PDFs for each student
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $students
+     * @param string $fromDate
+     * @param string $toDate
+     * @return \Illuminate\Http\Response
+     */
+    private function generateZIPDTR($students, $fromDate, $toDate)
+    {
+        $zip = new \ZipArchive();
+        $zipFilename = tempnam(sys_get_temp_dir(), 'bulk_dtr_') . '.zip';
+
+        try {
+            if ($zip->open($zipFilename, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+                \Log::error('Failed to create ZIP file for bulk DTR', [
+                    'filename' => $zipFilename,
+                    'error' => $zip->getStatusString()
+                ]);
+                throw new \Exception('Failed to create ZIP file. Please try again.');
+            }
+
+            foreach ($students as $student) {
+                $pdf = PDF::loadView('admin.reports.dtr', [
+                    'student' => $student,
+                    'logs' => $student->logs,
+                    'fromDate' => $fromDate,
+                    'toDate' => $toDate,
+                ])->setPaper('a4', 'portrait');
+
+                $pdfContent = $pdf->output();
+
+                // Sanitize student ID before using in filename
+                $safeStudentId = preg_replace('/[^A-Za-z0-9._-]/', '_', $student->student_id_no);
+                $safeStudentId = substr($safeStudentId, 0, 50); // Limit length
+                $filename = "DTR_{$safeStudentId}_{$fromDate}_to_{$toDate}.pdf";
+                $safeFilename = preg_replace('/[^A-Za-z0-9._-]/', '_', $filename);
+
+                // Ensure filename doesn't exceed filesystem limits
+                if (strlen($safeFilename) > 255) {
+                    $safeFilename = substr($safeFilename, 0, 255);
+                }
+
+                $zip->addFromString($safeFilename, $pdfContent);
+            }
+
+            $zip->close();
+
+            return response()->download($zipFilename, "Bulk_DTR_{$fromDate}_to_{$toDate}.zip")
+                ->deleteFileAfterSend(true);
+        } catch (\Exception $e) {
+            // Ensure cleanup on error
+            if (file_exists($zipFilename)) {
+                @unlink($zipFilename);
+            }
+            \Log::error('Bulk DTR ZIP generation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'Failed to generate ZIP file: ' . $e->getMessage());
+        }
+    }
+
     private function generateDTR(Request $request)
     {
         $student = Student::findOrFail($request->input('student_id'));
