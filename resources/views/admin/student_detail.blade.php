@@ -168,4 +168,127 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.students.update', $student->id) }}">
+                @method('PUT')
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">First Name</label>
+                            <input type="text" name="first_name" class="form-control" value="{{ $student->first_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Middle Name</label>
+                            <input type="text" name="middle_name" class="form-control" value="{{ $student->middle_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" name="last_name" class="form-control" value="{{ $student->last_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <input type="text" name="department" class="form-control" value="{{ $student->department }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Program</label>
+                            <input type="text" name="program" class="form-control" value="{{ $student->program }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contact No.</label>
+                            <input type="text" name="contact_no" class="form-control" value="{{ $student->contact_no }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Company</label>
+                            <input type="text" name="company" class="form-control" value="{{ $student->company }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Supervisor Name</label>
+                            <input type="text" name="supervisor_name" class="form-control" value="{{ $student->supervisor_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">OJT Start Date</label>
+                            <input type="date" name="ojt_start" class="form-control" value="{{ $student->ojt_start?->format('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">OJT End Date</label>
+                            <input type="date" name="ojt_end" class="form-control" value="{{ $student->ojt_end?->format('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Required Hours</label>
+                            <input type="number" name="required_hours" class="form-control" value="{{ $student->required_hours }}" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="active" {{ $student->status == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ $student->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="completed" {{ $student->status == 'completed' ? 'selected' : '' }}>Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Manual Log Modal -->
+<div class="modal fade" id="addLogModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.students.logs.create', $student->id) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Manual Time Log</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" required max="{{ now()->toDateString() }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Time</label>
+                        <input type="time" name="time" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select name="log_type" class="form-select" required>
+                            <option value="IN">IN</option>
+                            <option value="OUT">OUT</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select name="log_category" class="form-select" required>
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea name="reason" class="form-control" rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection

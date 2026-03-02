@@ -426,14 +426,69 @@ class AdminController extends Controller
         return $pdf->download("DTR_{$student->student_id_no}_{$fromDate}_to_{$toDate}.pdf");
     }
 
+    /**
+     * Generate OJT progress report showing all student progress
+     *
+     * @return \Illuminate\Http\Response
+     */
     private function generateProgressReport()
     {
+        // Load ALL time logs for each student, not just current month
         $students = Student::with(['timeLogs' => function($q) {
-            $q->whereMonth('date', now()->month);
+            $q->orderBy('date');
         }])->get();
 
+        // Calculate progress metrics for each student
+        foreach ($students as $student) {
+            $totalHours = 0;
+            $daysWorked = 0;
+            $logsByDate = $student->timeLogs->groupBy('date');
+
+            foreach ($logsByDate as $date => $dayLogs) {
+                $amIn = $dayLogs->first(fn($log) => $log->log_category === 'AM' && $log->log_type === 'IN');
+                $amOut = $dayLogs->first(fn($log) => $log->log_category === 'AM' && $log->log_type === 'OUT');
+                $pmIn = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'IN');
+                $pmOut = $dayLogs->first(fn($log) => $log->log_category === 'PM' && $log->log_type === 'OUT');
+
+                $dayHours = 0;
+                if ($amIn && $amOut) {
+                    $dayHours += $amIn->timestamp->diffInMinutes($amOut->timestamp) / 60;
+                }
+                if ($pmIn && $pmOut) {
+                    $dayHours += $pmIn->timestamp->diffInMinutes($pmOut->timestamp) / 60;
+                }
+
+                // Cap daily hours at 8
+                $totalHours += min($dayHours, 8);
+                if ($dayHours > 0) {
+                    $daysWorked++;
+                }
+            }
+
+            $requiredHours = $student->required_hours ?? 500;
+            $remainingHours = max(0, $requiredHours - $totalHours);
+            $percentage = $requiredHours > 0 ? min(100, ($totalHours / $requiredHours) * 100) : 0;
+
+            // Calculate estimated completion date (assuming 8 hours/day, 5 days/week)
+            if ($totalHours > 0 && $remainingHours > 0) {
+                $avgHoursPerDay = $totalHours / max(1, $daysWorked);
+                $estimatedDaysLeft = ceil($remainingHours / min(8, $avgHoursPerDay));
+                $estimatedDate = now()->addWeekdays($estimatedDaysLeft);
+            } else {
+                $estimatedDate = null;
+            }
+
+            // Attach calculated metrics to student
+            $student->total_hours = $totalHours;
+            $student->required_hours = $requiredHours;
+            $student->remaining_hours = $remainingHours;
+            $student->percentage = $percentage;
+            $student->days_worked = $daysWorked;
+            $student->estimated_completion = $estimatedDate;
+        }
+
         $pdf = PDF::loadView('admin.reports.progress', compact('students'));
-        return $pdf->download('OJT_Progress_Report_' . now()->format('Y-m') . '.pdf');
+        return $pdf->download('OJT_Progress_Report_' . now()->format('Y-m-d') . '.pdf');
     }
 
     private function generateLateReport()
