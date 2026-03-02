@@ -100,6 +100,9 @@ Route::middleware(['auth', 'role:admin,guard'])->prefix('admin')->name('admin.')
         Route::put('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
         Route::get('/locations', [AdminController::class, 'locations'])->name('locations');
         Route::post('/locations', [AdminController::class, 'createLocation'])->name('locations.create');
+        Route::put('/locations/{id}', [AdminController::class, 'updateLocation'])->name('locations.update');
+        Route::delete('/locations/{id}', [AdminController::class, 'deleteLocation'])->name('locations.delete');
+        Route::post('/locations/{id}/regenerate-key', [AdminController::class, 'regenerateLocationKey'])->name('locations.regenerate-key');
     });
 });
 

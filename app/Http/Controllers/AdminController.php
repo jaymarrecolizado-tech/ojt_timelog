@@ -584,7 +584,7 @@ class AdminController extends Controller
             'description' => 'nullable|string|max:300',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'radius_meters' => 'nullable|integer',
+            'radius_meters' => 'nullable|integer|min:10|max:1000',
         ]);
 
         Location::create([
@@ -595,6 +595,42 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', 'Location created successfully');
+    }
+
+    public function updateLocation(Request $request, $id)
+    {
+        $location = Location::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'nullable|string|max:300',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'radius_meters' => 'required|integer|min:10|max:1000',
+            'is_active' => 'required|boolean',
+        ]);
+
+        $location->update($validated);
+
+        return back()->with('success', 'Location updated successfully');
+    }
+
+    public function deleteLocation($id)
+    {
+        $location = Location::findOrFail($id);
+        $location->delete();
+
+        return back()->with('success', 'Location deleted successfully');
+    }
+
+    public function regenerateLocationKey($id)
+    {
+        $location = Location::findOrFail($id);
+        $location->update([
+            'secret_key' => Str::random(64)
+        ]);
+
+        return back()->with('success', 'Secret key regenerated successfully');
     }
 
     public function addManualLog(Request $request, $studentId)
