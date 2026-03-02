@@ -2,6 +2,13 @@
 
 @section('title', 'Locations')
 
+@section('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .leaflet-container { background: #f8f9fa; }
+</style>
+@endsection
+
 @section('content')
 <div class="container">
     <div class="row mb-4">
@@ -126,11 +133,11 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Latitude</label>
-                            <input type="number" step="any" name="latitude" class="form-control" id="latitudeInput" placeholder="e.g., 14.599512">
+                            <input type="number" step="any" name="latitude" class="form-control" id="latitudeInput" placeholder="e.g., 17.8">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Longitude</label>
-                            <input type="number" step="any" name="longitude" class="form-control" id="longitudeInput" placeholder="e.g., 120.984222">
+                            <input type="number" step="any" name="longitude" class="form-control" id="longitudeInput" placeholder="e.g., 121.8">
                         </div>
                     </div>
                     <div class="mb-3">
@@ -147,50 +154,43 @@
         </div>
     </div>
 </div>
-
-{{-- Leaflet CSS --}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Location data from server - only active locations with coordinates
-    const locations = {{ json_encode($locations->filter(function($loc) {
-        return $loc->is_active && $loc->latitude && $loc->longitude;
-    })->map(function($loc) {
-        return [
-            'id' => $loc->id,
-            'name' => $loc->name,
-            'description' => $loc->description,
-            'lat' => (float) $loc->latitude,
-            'lng' => (float) $loc->longitude,
-            'radius' => $loc->radius_meters,
-            'active' => $loc->is_active
-        ];
-    })->values()) }};
+    @php
+        $locationArray = [];
+        foreach($locations as $index => $loc) {
+            $locationArray[] = [
+                'index' => $index,
+                'name' => $loc->name,
+                'lat' => $loc->latitude ? floatval($loc->latitude) : null,
+                'lng' => $loc->longitude ? floatval($loc->longitude) : null,
+                'radius' => $loc->radius_meters,
+                'active' => $loc->is_active,
+                'hasCoords' => !empty($loc->latitude) && !empty($loc->longitude)
+            ];
+        }
+    @endphp
 
-    const defaultLat = locations.length > 0 ? locations[0].lat : 17.8;
-    const defaultLng = locations.length > 0 ? locations[0].lng : 121.8;
+    const allLocations = {{ json_encode($locationArray) }};
+    const mappableLocations = allLocations.filter(loc => loc.hasCoords);
+    const defaultLat = mappableLocations.length > 0 ? mappableLocations[0].lat : 17.8;
+    const defaultLng = mappableLocations.length > 0 ? mappableLocations[0].lng : 121.8;
 
-    // Initialize main map
-    const mainMapElement = document.getElementById('map');
-    if (mainMapElement) {
-        const mainMap = L.map('map').setView([defaultLat, defaultLng], locations.length > 0 ? 13 : 9);
+    // Main map
+    if (document.getElementById('map') && typeof L !== 'undefined') {
+        const mainMap = L.map('map').setView([defaultLat, defaultLng], mappableLocations.length > 0 ? 13 : 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(mainMap);
 
-        // Add markers for each location
-        locations.forEach(function(loc) {
+        mappableLocations.forEach(loc => {
             L.marker([loc.lat, loc.lng]).addTo(mainMap)
-                .bindPopup('<strong>' + loc.name + '</strong><br>' +
-                    (loc.description || '') + '<br>' +
-                    '<small>Lat: ' + loc.lat.toFixed(6) + ', Lng: ' + loc.lng.toFixed(6) + '</small><br>' +
-                    '<small>Radius: ' + loc.radius + 'm</small>');
+                .bindPopup('<strong>' + loc.name + '</strong><br>Radius: ' + loc.radius + 'm');
 
             L.circle([loc.lat, loc.lng], {
                 color: loc.active ? '#10b981' : '#9ca3af',
@@ -200,43 +200,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }).addTo(mainMap);
         });
 
-        // Fit bounds if there are markers
-        if (locations.length > 0) {
-            const group = new L.featureGroup(
-                locations.map(function(loc) {
-                    return L.marker([loc.lat, loc.lng]);
-                })
-            );
+        if (mappableLocations.length > 1) {
+            const group = L.featureGroup(mappableLocations.map(loc => L.marker([loc.lat, loc.lng])));
             mainMap.fitBounds(group.getBounds().pad(0.1));
         }
     }
 
-    // Initialize mini maps for location cards
-    locations.forEach(function(loc, index) {
-        const mapId = 'locationMap' + index;
-        const mapElement = document.getElementById(mapId);
-        if (mapElement) {
-            const map = L.map(mapId, {
-                zoomControl: false,
-                scrollWheelZoom: false
-            }).setView([loc.lat, loc.lng], 15);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: ''
-            }).addTo(map);
-
-            L.marker([loc.lat, loc.lng]).addTo(map);
-
-            L.circle([loc.lat, loc.lng], {
-                color: loc.active ? '#10b981' : '#9ca3af',
-                fillColor: loc.active ? '#10b981' : '#9ca3af',
-                fillOpacity: 0.2,
-                radius: loc.radius
-            }).addTo(map);
+    // Mini maps for cards
+    allLocations.forEach(loc => {
+        if (!loc.hasCoords) return;
+        const mapEl = document.getElementById('locationMap' + loc.index);
+        if (mapEl && typeof L !== 'undefined') {
+            L.map(mapEl, { zoomControl: false, scrollWheelZoom: false })
+                .setView([loc.lat, loc.lng], 15)
+                .addLayer(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'))
+                .addLayer(L.marker([loc.lat, loc.lng]));
         }
     });
 
-    // Modal map - initialize when modal is shown
+    // Modal map
     let modalMap = null;
     let modalMarker = null;
 
@@ -250,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
             modalMap = L.map('modalMap').setView([defaultLat, defaultLng], 10);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(modalMap);
 
             modalMap.on('click', function(e) {
@@ -259,15 +241,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 document.getElementById('latitudeInput').value = lat;
                 document.getElementById('longitudeInput').value = lng;
-                document.getElementById('selectedCoords').innerHTML =
-                    '<i class="bi bi-geo-alt-fill text-primary me-1"></i>' + lat + ', ' + lng;
+                document.getElementById('selectedCoords').textContent = lat + ', ' + lng;
 
-                if (modalMarker) {
-                    modalMap.removeLayer(modalMarker);
-                }
+                if (modalMarker) modalMap.removeLayer(modalMarker);
                 modalMarker = L.marker([lat, lng]).addTo(modalMap);
             });
-        }, 500);
+        }, 300);
     });
 });
 </script>
