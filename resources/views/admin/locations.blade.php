@@ -160,35 +160,35 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    @php
-        $locationArray = [];
-        foreach($locations as $index => $loc) {
-            $locationArray[] = [
-                'index' => $index,
-                'name' => $loc->name,
-                'lat' => $loc->latitude ? floatval($loc->latitude) : null,
-                'lng' => $loc->longitude ? floatval($loc->longitude) : null,
-                'radius' => $loc->radius_meters,
-                'active' => $loc->is_active,
-                'hasCoords' => !empty($loc->latitude) && !empty($loc->longitude)
-            ];
-        }
-    @endphp
+    // Prepare location data
+    var locationData = [
+        @foreach($locations as $index => $loc)
+        {
+            index: {{ $index }},
+            name: {{ Illuminate\Support\Js::encode($loc->name) }},
+            lat: {{ $loc->latitude ? 'parseFloat(' . $loc->latitude . ')' : 'null' }},
+            lng: {{ $loc->longitude ? 'parseFloat(' . $loc->longitude . ')' : 'null' }},
+            radius: {{ $loc->radius_meters }},
+            active: {{ $loc->is_active ? 'true' : 'false' }},
+            hasCoords: {{ ($loc->latitude && $loc->longitude) ? 'true' : 'false' }}
+        }@if(!$loop->last),@endif
+        @endforeach
+    ];
 
-    const allLocations = {{ json_encode($locationArray) }};
-    const mappableLocations = allLocations.filter(loc => loc.hasCoords);
-    const defaultLat = mappableLocations.length > 0 ? mappableLocations[0].lat : 17.8;
-    const defaultLng = mappableLocations.length > 0 ? mappableLocations[0].lng : 121.8;
+    var mappableLocations = locationData.filter(function(loc) { return loc.hasCoords; });
+    var defaultLat = mappableLocations.length > 0 ? mappableLocations[0].lat : 17.8;
+    var defaultLng = mappableLocations.length > 0 ? mappableLocations[0].lng : 121.8;
 
     // Main map
     if (document.getElementById('map') && typeof L !== 'undefined') {
-        const mainMap = L.map('map').setView([defaultLat, defaultLng], mappableLocations.length > 0 ? 13 : 9);
+        var mainMap = L.map('map').setView([defaultLat, defaultLng], mappableLocations.length > 0 ? 13 : 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(mainMap);
 
-        mappableLocations.forEach(loc => {
+        for (var i = 0; i < mappableLocations.length; i++) {
+            var loc = mappableLocations[i];
             L.marker([loc.lat, loc.lng]).addTo(mainMap)
                 .bindPopup('<strong>' + loc.name + '</strong><br>Radius: ' + loc.radius + 'm');
 
@@ -198,29 +198,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 fillOpacity: 0.15,
                 radius: loc.radius
             }).addTo(mainMap);
-        });
+        }
 
         if (mappableLocations.length > 1) {
-            const group = L.featureGroup(mappableLocations.map(loc => L.marker([loc.lat, loc.lng])));
+            var group = L.featureGroup(mappableLocations.map(function(loc) {
+                return L.marker([loc.lat, loc.lng]);
+            }));
             mainMap.fitBounds(group.getBounds().pad(0.1));
         }
     }
 
     // Mini maps for cards
-    allLocations.forEach(loc => {
-        if (!loc.hasCoords) return;
-        const mapEl = document.getElementById('locationMap' + loc.index);
+    for (var i = 0; i < locationData.length; i++) {
+        var loc = locationData[i];
+        if (!loc.hasCoords) continue;
+        var mapEl = document.getElementById('locationMap' + loc.index);
         if (mapEl && typeof L !== 'undefined') {
             L.map(mapEl, { zoomControl: false, scrollWheelZoom: false })
                 .setView([loc.lat, loc.lng], 15)
                 .addLayer(L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'))
                 .addLayer(L.marker([loc.lat, loc.lng]));
         }
-    });
+    }
 
     // Modal map
-    let modalMap = null;
-    let modalMarker = null;
+    var modalMap = null;
+    var modalMarker = null;
 
     document.getElementById('addLocationModal').addEventListener('shown.bs.modal', function() {
         setTimeout(function() {
@@ -236,8 +239,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }).addTo(modalMap);
 
             modalMap.on('click', function(e) {
-                const lat = e.latlng.lat.toFixed(6);
-                const lng = e.latlng.lng.toFixed(6);
+                var lat = e.latlng.lat.toFixed(6);
+                var lng = e.latlng.lng.toFixed(6);
 
                 document.getElementById('latitudeInput').value = lat;
                 document.getElementById('longitudeInput').value = lng;
