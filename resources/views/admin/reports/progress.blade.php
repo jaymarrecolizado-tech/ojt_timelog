@@ -16,19 +16,20 @@
             font-size: 10px;
             margin: 0;
             padding: 0;
-            width: 280mm; /* A4 landscape width */
+            width: 280mm;
         }
         .header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             padding-bottom: 8px;
             border-bottom: 2px solid #333;
         }
         .header h1 {
-            font-size: 16px;
+            font-size: 18px;
             margin: 0 0 5px 0;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            font-weight: bold;
         }
         .header p {
             color: #666;
@@ -37,30 +38,58 @@
         }
         .summary {
             display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px 12px;
-            background-color: #f0f4f8;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
+            justify-content: center;
+            gap: 15px;
+            margin: 12px 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .summary-item {
             text-align: center;
             flex: 1;
-            padding: 0 5px;
+            padding: 12px 10px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 6px;
+            min-width: 100px;
+            position: relative;
+            overflow: hidden;
+        }
+        .summary-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+        .summary-item.students::before { background: #3182ce; }
+        .summary-item.active::before { background: #38a169; }
+        .summary-item.completed::before { background: #805ad5; }
+        .summary-item.hours::before { background: #dd6b20; }
+        .summary-item.progress::before { background: #e53e3e; }
+
+        .summary-item .icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+            display: block;
+            opacity: 0.8;
         }
         .summary-item .number {
-            font-size: 18px;
+            font-size: 28px;
             font-weight: bold;
             color: #1a365d;
-            line-height: 1.2;
+            line-height: 1;
             display: block;
+            margin-bottom: 3px;
         }
         .summary-item .label {
             font-size: 8px;
             color: #4a5568;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            font-weight: 600;
             display: block;
         }
         table {
@@ -86,16 +115,16 @@
         tr:nth-child(even) {
             background-color: #f7fafc;
         }
-        .col-id { width: 40px; text-align: center; }
+        .col-id { width: 35px; text-align: center; }
         .col-student-id { width: 70px; }
-        .col-name { width: 120px; }
-        .col-dept { width: 100px; }
+        .col-name { width: 110px; }
+        .col-dept { width: 95px; }
         .col-days { width: 35px; text-align: center; }
         .col-hours { width: 45px; text-align: center; }
-        .col-required { width: 50px; text-align: center; }
-        .col-remaining { width: 55px; text-align: center; }
-        .col-progress { width: 90px; }
-        .col-est { width: 75px; }
+        .col-required { width: 45px; text-align: center; }
+        .col-remaining { width: 50px; text-align: center; }
+        .col-progress { width: 95px; }
+        .col-est { width: 70px; }
         .col-status { width: 60px; text-align: center; }
 
         .progress-container {
@@ -114,7 +143,6 @@
         .progress-bar-fill {
             height: 100%;
             border-radius: 2px;
-            transition: width 0.3s;
         }
         .progress-fill.low { background-color: #e53e3e; }
         .progress-fill.medium { background-color: #dd6b20; }
@@ -176,7 +204,7 @@
         <p>As of {{ now()->format('F d, Y') }} | Generated: {{ now()->format('F d, Y h:i A') }}</p>
     </div>
 
-    {{-- Summary Section --}}
+    {{-- Summary Section - Infographic Style --}}
     @php
         $totalStudents = $students->count();
         $activeStudents = $students->where('status', 'active')->count();
@@ -186,23 +214,28 @@
     @endphp
 
     <div class="summary">
-        <div class="summary-item">
+        <div class="summary-item students">
+            <span class="icon">👥</span>
             <span class="number">{{ $totalStudents }}</span>
             <span class="label">Total Students</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item active">
+            <span class="icon">📗</span>
             <span class="number">{{ $activeStudents }}</span>
             <span class="label">Active</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item completed">
+            <span class="icon">✓</span>
             <span class="number">{{ $completedStudents }}</span>
             <span class="label">Completed</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item hours">
+            <span class="icon">⏱</span>
             <span class="number">{{ number_format($totalHoursCompleted) }}</span>
             <span class="label">Total Hours</span>
         </div>
-        <div class="summary-item">
+        <div class="summary-item progress">
+            <span class="icon">📊</span>
             <span class="number">{{ number_format($avgPercentage, 1) }}%</span>
             <span class="label">Avg Progress</span>
         </div>
