@@ -170,13 +170,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return $loc['lat'] && $loc['lng'];
     })->values()) }};
 
-    const defaultLat = locations.length > 0 ? locations[0].lat : 14.599512;
-    const defaultLng = locations.length > 0 ? locations[0].lng : 120.984222;
+    const defaultLat = locations.length > 0 ? locations[0].lat : 17.8;
+    const defaultLng = locations.length > 0 ? locations[0].lng : 121.8;
 
     // Initialize main map
     const mainMapElement = document.getElementById('map');
     if (mainMapElement) {
-        const mainMap = L.map('map').setView([defaultLat, defaultLng], 13);
+        const mainMap = L.map('map').setView([defaultLat, defaultLng], locations.length > 0 ? 13 : 9);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            modalMap = L.map('modalMap').setView([defaultLat, defaultLng], 13);
+            modalMap = L.map('modalMap').setView([defaultLat, defaultLng], 10);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
