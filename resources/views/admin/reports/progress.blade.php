@@ -19,53 +19,80 @@
         }
         .header {
             text-align: center;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             padding-bottom: 5px;
-            border-bottom: 1px solid #333;
+            border-bottom: 2px solid #2d3748;
         }
         .header h1 {
-            font-size: 14px;
-            margin: 0 0 3px 0;
+            font-size: 16px;
+            margin: 0 0 4px 0;
             text-transform: uppercase;
             font-weight: bold;
+            color: #1a202c;
+            letter-spacing: 1px;
         }
         .header p {
-            color: #666;
+            color: #718096;
             margin: 0;
             font-size: 8px;
         }
         .summary {
             display: flex;
             justify-content: center;
-            gap: 8px;
-            margin: 5px 0 8px 0;
-            padding: 6px 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 4px;
+            gap: 10px;
+            margin: 8px 0 10px 0;
         }
-        .summary-item {
-            text-align: center;
+        .summary-card {
             flex: 1;
-            padding: 6px 8px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 3px;
-            min-width: 70px;
+            text-align: center;
+            padding: 10px 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-width: 80px;
+            position: relative;
+            overflow: hidden;
         }
-        .summary-item .number {
-            font-size: 16px;
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        .summary-card.blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .summary-card.blue::before { background: #3182ce; }
+        .summary-card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .summary-card.green::before { background: #38a169; }
+        .summary-card.purple { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
+        .summary-card.purple::before { background: #805ad5; }
+        .summary-card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .summary-card.orange::before { background: #dd6b20; }
+        .summary-card.red { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .summary-card.red::before { background: #e53e3e; }
+
+        .summary-card .card-inner {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 4px;
+            padding: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .summary-card .number {
+            font-size: 20px;
             font-weight: bold;
             color: #1a365d;
             line-height: 1;
             display: block;
         }
-        .summary-item .label {
-            font-size: 6px;
+        .summary-card .label {
+            font-size: 7px;
             color: #4a5568;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             font-weight: 600;
             display: block;
-            margin-top: 2px;
+            margin-top: 3px;
         }
         table {
             width: 100%;
@@ -74,100 +101,131 @@
         }
         th, td {
             border: 1px solid #2d3748;
-            padding: 4px 3px;
+            padding: 5px 4px;
             text-align: left;
             vertical-align: middle;
         }
         th {
-            background-color: #edf2f7;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             font-weight: bold;
             text-transform: uppercase;
             font-size: 6px;
             letter-spacing: 0.5px;
-            color: #1a202c;
         }
         tr:nth-child(even) {
             background-color: #f7fafc;
         }
+        tr:hover {
+            background-color: #edf2f7;
+        }
         .col-id { width: 25px; text-align: center; }
-        .col-student-id { width: 55px; }
-        .col-name { width: 100px; }
-        .col-dept { width: 85px; }
+        .col-student-id { width: 60px; }
+        .col-name { width: 110px; }
+        .col-dept { width: 90px; }
         .col-days { width: 30px; text-align: center; }
-        .col-hours { width: 35px; text-align: center; }
+        .col-hours { width: 40px; text-align: center; }
         .col-required { width: 35px; text-align: center; }
         .col-remaining { width: 40px; text-align: center; }
-        .col-progress { width: 80px; }
-        .col-est { width: 60px; }
-        .col-status { width: 50px; text-align: center; }
+        .col-progress { width: 90px; }
+        .col-est { width: 65px; }
+        .col-status { width: 55px; text-align: center; }
 
         .progress-container {
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 4px;
         }
         .progress-bar-bg {
             background-color: #e2e8f0;
-            height: 8px;
-            border-radius: 2px;
+            height: 10px;
+            border-radius: 5px;
             flex: 1;
-            min-width: 30px;
+            min-width: 35px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
         }
         .progress-bar-fill {
             height: 100%;
-            border-radius: 2px;
+            border-radius: 5px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        .progress-fill.low { background-color: #e53e3e; }
-        .progress-fill.medium { background-color: #dd6b20; }
-        .progress-fill.high { background-color: #38a169; }
-        .progress-fill.complete { background-color: #3182ce; }
+        .progress-fill.low {
+            background: linear-gradient(90deg, #fc8181 0%, #e53e3e 100%);
+        }
+        .progress-fill.medium {
+            background: linear-gradient(90deg, #f6ad55 0%, #dd6b20 100%);
+        }
+        .progress-fill.high {
+            background: linear-gradient(90deg, #68d391 0%, #38a169 100%);
+        }
+        .progress-fill.complete {
+            background: linear-gradient(90deg, #63b3ed 0%, #3182ce 100%);
+        }
         .percentage-text {
             font-weight: bold;
             font-size: 7px;
-            min-width: 28px;
+            min-width: 30px;
             text-align: right;
         }
         .status-badge {
             display: inline-block;
-            padding: 2px 5px;
-            border-radius: 2px;
+            padding: 3px 6px;
+            border-radius: 4px;
             font-size: 6px;
             font-weight: bold;
             text-transform: uppercase;
         }
-        .status-active { background-color: #c6f6d5; color: #22543d; }
-        .status-completed { background-color: #bee3f8; color: #2a4365; }
-        .status-inactive { background-color: #fed7d7; color: #742a2a; }
-        .status-pending { background-color: #fefcbf; color: #744210; }
+        .status-active {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        .status-completed {
+            background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+        .status-inactive {
+            background: linear-gradient(135deg, #fed7d7 0%, #fc8181 100%);
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        .status-pending {
+            background: linear-gradient(135deg, #fefcbf 0%, #fbd38d 100%);
+            color: #744210;
+            border: 1px solid #fbd38d;
+        }
         .footer {
-            margin-top: 8px;
-            padding-top: 5px;
-            border-top: 1px solid #cbd5e0;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
             text-align: center;
             font-size: 7px;
             color: #718096;
         }
         .legend {
-            margin-top: 5px;
-            padding: 4px 8px;
-            background-color: #f7fafc;
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
             border: 1px solid #e2e8f0;
-            font-size: 6px;
+            border-radius: 4px;
+            font-size: 7px;
         }
         .legend span {
             display: inline-block;
-            margin-right: 10px;
+            margin-right: 12px;
         }
         .legend-color {
             display: inline-block;
-            width: 8px;
-            height: 8px;
-            margin-right: 2px;
+            width: 12px;
+            height: 10px;
+            margin-right: 3px;
             vertical-align: middle;
-            border-radius: 1px;
+            border-radius: 3px;
         }
-        .text-completed { color: #38a169; font-weight: bold; font-size: 7px; }
-        .text-na { color: #a0aec0; font-size: 7px; }
+        .text-completed { color: #38a169; font-weight: bold; font-size: 8px; }
+        .text-na { color: #a0aec0; font-size: 8px; }
     </style>
 </head>
 <body>
@@ -176,7 +234,7 @@
         <p>As of {{ now()->format('F d, Y') }} | Generated: {{ now()->format('F d, Y h:i A') }}</p>
     </div>
 
-    {{-- Summary Section - Compact --}}
+    {{-- Summary Section - Card Style --}}
     @php
         $totalStudents = $students->count();
         $activeStudents = $students->where('status', 'active')->count();
@@ -186,25 +244,35 @@
     @endphp
 
     <div class="summary">
-        <div class="summary-item">
-            <span class="number">{{ $totalStudents }}</span>
-            <span class="label">Total</span>
+        <div class="summary-card blue">
+            <div class="card-inner">
+                <span class="number">{{ $totalStudents }}</span>
+                <span class="label">Total Students</span>
+            </div>
         </div>
-        <div class="summary-item">
-            <span class="number">{{ $activeStudents }}</span>
-            <span class="label">Active</span>
+        <div class="summary-card green">
+            <div class="card-inner">
+                <span class="number">{{ $activeStudents }}</span>
+                <span class="label">Active</span>
+            </div>
         </div>
-        <div class="summary-item">
-            <span class="number">{{ $completedStudents }}</span>
-            <span class="label">Done</span>
+        <div class="summary-card purple">
+            <div class="card-inner">
+                <span class="number">{{ $completedStudents }}</span>
+                <span class="label">Completed</span>
+            </div>
         </div>
-        <div class="summary-item">
-            <span class="number">{{ number_format($totalHoursCompleted) }}</span>
-            <span class="label">Hours</span>
+        <div class="summary-card orange">
+            <div class="card-inner">
+                <span class="number">{{ number_format($totalHoursCompleted) }}</span>
+                <span class="label">Total Hours</span>
+            </div>
         </div>
-        <div class="summary-item">
-            <span class="number">{{ number_format($avgPercentage, 1) }}%</span>
-            <span class="label">Progress</span>
+        <div class="summary-card red">
+            <div class="card-inner">
+                <span class="number">{{ number_format($avgPercentage, 1) }}%</span>
+                <span class="label">Avg Progress</span>
+            </div>
         </div>
     </div>
 
@@ -254,13 +322,13 @@
                         @if($student->remaining_hours <= 0)
                             <span class="text-completed">Done</span>
                         @elseif($student->estimated_completion)
-                            <span style="font-size: 7px;">{{ $student->estimated_completion->format('M d') }}</span>
+                            <span style="font-size: 8px;">{{ $student->estimated_completion->format('M d') }}</span>
                         @else
                             <span class="text-na">-</span>
                         @endif
                     </td>
                     <td class="col-status">
-                        <span class="status-badge {{ $statusClass }}">{{ ucfirst(substr($student->status, 0, 4)) }}</span>
+                        <span class="status-badge {{ $statusClass }}">{{ ucfirst($student->status) }}</span>
                     </td>
                 </tr>
             @empty
@@ -274,10 +342,10 @@
     {{-- Legend --}}
     <div class="legend">
         <strong>Progress:</strong>
-        <span><span class="legend-color" style="background-color: #e53e3e;"></span>&lt;30%</span>
-        <span><span class="legend-color" style="background-color: #dd6b20;"></span>30-70%</span>
-        <span><span class="legend-color" style="background-color: #38a169;"></span>&gt;70%</span>
-        <span><span class="legend-color" style="background-color: #3182ce;"></span>100%</span>
+        <span><span class="legend-color" style="background: linear-gradient(90deg, #fc8181 0%, #e53e3e 100%);"></span>&lt; 30%</span>
+        <span><span class="legend-color" style="background: linear-gradient(90deg, #f6ad55 0%, #dd6b20 100%);"></span>30-70%</span>
+        <span><span class="legend-color" style="background: linear-gradient(90deg, #68d391 0%, #38a169 100%);"></span>&gt; 70%</span>
+        <span><span class="legend-color" style="background: linear-gradient(90deg, #63b3ed 0%, #3182ce 100%);"></span>100%</span>
     </div>
 
     <div class="footer">
