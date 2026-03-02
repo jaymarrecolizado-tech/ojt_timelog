@@ -4,55 +4,6 @@
 
 @section('content')
 <div class="container">
-    <style>
-        #map {
-            height: 400px;
-            width: 100%;
-            border-radius: 8px;
-            border: 2px solid #e2e8f0;
-            z-index: 1;
-        }
-        #modalMap {
-            height: 300px;
-            width: 100%;
-            border-radius: 6px;
-            border: 1px solid #cbd5e0;
-            margin-bottom: 10px;
-            z-index: 1;
-        }
-        .leaflet-popup-content {
-            margin: 8px 12px;
-            font-size: 13px;
-        }
-        .location-card-map {
-            height: 150px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border: 1px solid #e2e8f0;
-            z-index: 1;
-        }
-        .map-instructions {
-            background-color: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 6px;
-            padding: 8px 12px;
-            margin-bottom: 12px;
-            font-size: 13px;
-        }
-        .coordinates-badge {
-            display: inline-block;
-            background-color: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            padding: 4px 10px;
-            font-size: 12px;
-            font-family: monospace;
-            margin-top: 8px;
-        }
-    </style>
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
     <div class="row mb-4">
         <div class="col">
             <h2>Scan Locations</h2>
@@ -64,14 +15,13 @@
         </div>
     </div>
 
-    {{-- Map showing all locations --}}
     @if($locations->count() > 0)
     <div class="card mb-4">
         <div class="card-header bg-white">
             <h6 class="mb-0"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Location Map</h6>
         </div>
         <div class="card-body">
-            <div id="map"></div>
+            <div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
         </div>
     </div>
     @endif
@@ -92,7 +42,7 @@
                         @endif
 
                         @if($location->latitude && $location->longitude)
-                            <div id="locationMap{{ $loop->index }}" class="location-card-map"></div>
+                            <div id="locationMap{{ $loop->index }}" style="height: 150px; width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 10px;"></div>
                         @endif
 
                         <table class="table table-sm table-borderless">
@@ -100,7 +50,7 @@
                                 <tr>
                                     <td class="text-muted">Coordinates:</td>
                                     <td>
-                                        <span class="coordinates-badge">
+                                        <span style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; font-size: 12px; font-family: monospace;">
                                             {{ number_format($location->latitude, 6) }}, {{ number_format($location->longitude, 6) }}
                                         </span>
                                     </td>
@@ -151,8 +101,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
                     <div class="mb-3">
                         <label class="form-label">Location Name</label>
                         <input type="text" name="name" class="form-control" required placeholder="e.g., Main Office, Building A">
@@ -162,14 +110,13 @@
                         <textarea name="description" class="form-control" rows="2" placeholder="Brief description of this location"></textarea>
                     </div>
 
-                    {{-- Interactive Map for picking location --}}
-                    <div class="map-instructions">
+                    <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
                         <i class="bi bi-hand-index-thumb me-2"></i>
                         <strong>Click on the map</strong> to set the location coordinates, or enter manually below.
                     </div>
-                    <div id="modalMap"></div>
+                    <div id="modalMap" style="height: 300px; width: 100%; border-radius: 6px; border: 1px solid #cbd5e0; margin-bottom: 10px;"></div>
                     <div class="text-center mb-3">
-                        <span class="coordinates-badge" id="selectedCoords">
+                        <span id="selectedCoords" style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 12px; font-size: 12px; font-family: monospace;">
                             Click map to select coordinates
                         </span>
                     </div>
@@ -198,150 +145,128 @@
         </div>
     </div>
 </div>
+
+{{-- Leaflet CSS --}}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
 @endsection
 
 @push('scripts')
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-// Main map showing all locations
-let mainMap = null;
-let modalMap = null;
-let markers = [];
-let modalMarker = null;
+document.addEventListener('DOMContentLoaded', function() {
+    // Location data from server
+    const locations = {{ json_encode($locations->map(function($loc) {
+        return [
+            'id' => $loc->id,
+            'name' => $loc->name,
+            'description' => $loc->description,
+            'lat' => (float) $loc->latitude,
+            'lng' => (float) $loc->longitude,
+            'radius' => $loc->radius_meters,
+            'active' => $loc->is_active
+        ];
+    })->filter(function($loc) {
+        return $loc['lat'] && $loc['lng'];
+    })->values()) }};
 
-@php
-    $locationData = [];
-    foreach($locations as $location) {
-        if($location->latitude && $location->longitude) {
-            $locationData[] = [
-                'id' => $loop->index,
-                'name' => $location->name,
-                'description' => $location->description,
-                'lat' => (float) $location->latitude,
-                'lng' => (float) $location->longitude,
-                'radius' => $location->radius_meters,
-                'active' => $location->is_active
-            ];
-        }
-    }
-    $defaultLat = !empty($locationData) ? $locationData[0]['lat'] : 14.599512;
-    $defaultLng = !empty($locationData) ? $locationData[0]['lng'] : 120.984222;
-@endphp
+    const defaultLat = locations.length > 0 ? locations[0].lat : 14.599512;
+    const defaultLng = locations.length > 0 ? locations[0].lng : 120.984222;
 
-const locations = {{ json_encode($locationData) }};
-
-// Initialize main map
-function initMainMap() {
-    const mapElement = document.getElementById('map');
-    if (!mapElement || locations.length === 0) return;
-
-    mainMap = L.map('map').setView([{{ $defaultLat }}, {{ $defaultLng }}], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(mainMap);
-
-    // Add location markers
-    locations.forEach(loc => {
-        const marker = L.marker([loc.lat, loc.lng]).addTo(mainMap);
-        marker.bindPopup(`
-            <strong>${loc.name}</strong><br>
-            ${loc.description ? loc.description + '<br>' : ''}
-            <small>Lat: ${loc.lat.toFixed(6)}, Lng: ${loc.lng.toFixed(6)}</small><br>
-            <small>Radius: ${loc.radius}m</small>
-        `);
-        markers.push(marker);
-
-        // Add circle for radius
-        L.circle([loc.lat, loc.lng], {
-            color: loc.active ? '#10b981' : '#9ca3af',
-            fillColor: loc.active ? '#10b981' : '#9ca3af',
-            fillOpacity: 0.1,
-            radius: loc.radius
-        }).addTo(mainMap);
-    });
-
-    // Fit map to show all markers
-    if (markers.length > 0) {
-        const group = new L.featureGroup(markers);
-        mainMap.fitBounds(group.getBounds().pad(0.1));
-    }
-}
-
-// Initialize modal map for picking location
-function initModalMap() {
-    const mapElement = document.getElementById('modalMap');
-    if (!mapElement) return;
-
-    modalMap = L.map('modalMap').setView([{{ $defaultLat }}, {{ $defaultLng }}], 13);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(modalMap);
-
-    // Click handler for selecting location
-    modalMap.on('click', function(e) {
-        const lat = e.latlng.lat.toFixed(6);
-        const lng = e.latlng.lng.toFixed(6);
-
-        // Update inputs
-        document.getElementById('latitudeInput').value = lat;
-        document.getElementById('longitudeInput').value = lng;
-        document.getElementById('selectedCoords').innerHTML = `
-            <i class="bi bi-geo-alt-fill text-primary me-1"></i>
-            ${lat}, ${lng}
-        `;
-
-        // Remove old marker and add new one
-        if (modalMarker) {
-            modalMap.removeLayer(modalMarker);
-        }
-        modalMarker = L.marker([lat, lng]).addTo(modalMap);
-    });
-}
-
-// Initialize mini maps for each location card
-function initLocationCardMaps() {
-    locations.forEach((loc, index) => {
-        const mapId = `locationMap${index}`;
-        const mapElement = document.getElementById(mapId);
-        if (!mapElement) return;
-
-        const map = L.map(mapId, {
-            zoomControl: false,
-            scrollWheelZoom: false
-        }).setView([loc.lat, loc.lng], 15);
+    // Initialize main map
+    const mainMapElement = document.getElementById('map');
+    if (mainMapElement) {
+        const mainMap = L.map('map').setView([defaultLat, defaultLng], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: ''
-        }).addTo(map);
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mainMap);
 
-        L.marker([loc.lat, loc.lng]).addTo(map);
+        // Add markers for each location
+        locations.forEach(function(loc) {
+            L.marker([loc.lat, loc.lng]).addTo(mainMap)
+                .bindPopup('<strong>' + loc.name + '</strong><br>' +
+                    (loc.description || '') + '<br>' +
+                    '<small>Lat: ' + loc.lat.toFixed(6) + ', Lng: ' + loc.lng.toFixed(6) + '</small><br>' +
+                    '<small>Radius: ' + loc.radius + 'm</small>');
 
-        // Add circle for radius
-        L.circle([loc.lat, loc.lng], {
-            color: loc.active ? '#10b981' : '#9ca3af',
-            fillColor: loc.active ? '#10b981' : '#9ca3af',
-            fillOpacity: 0.2,
-            radius: loc.radius
-        }).addTo(map);
-    });
-}
+            L.circle([loc.lat, loc.lng], {
+                color: loc.active ? '#10b981' : '#9ca3af',
+                fillColor: loc.active ? '#10b981' : '#9ca3af',
+                fillOpacity: 0.15,
+                radius: loc.radius
+            }).addTo(mainMap);
+        });
 
-// Initialize maps when modal is shown
-document.addEventListener('DOMContentLoaded', function() {
-    initMainMap();
-    initLocationCardMaps();
-});
-
-document.getElementById('addLocationModal').addEventListener('shown.bs.modal', function() {
-    setTimeout(function() {
-        if (!modalMap) {
-            initModalMap();
-        } else {
-            modalMap.invalidateSize();
+        // Fit bounds if there are markers
+        if (locations.length > 0) {
+            const group = new L.featureGroup(
+                locations.map(function(loc) {
+                    return L.marker([loc.lat, loc.lng]);
+                })
+            );
+            mainMap.fitBounds(group.getBounds().pad(0.1));
         }
-    }, 300);
+    }
+
+    // Initialize mini maps for location cards
+    locations.forEach(function(loc, index) {
+        const mapId = 'locationMap' + index;
+        const mapElement = document.getElementById(mapId);
+        if (mapElement) {
+            const map = L.map(mapId, {
+                zoomControl: false,
+                scrollWheelZoom: false
+            }).setView([loc.lat, loc.lng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: ''
+            }).addTo(map);
+
+            L.marker([loc.lat, loc.lng]).addTo(map);
+
+            L.circle([loc.lat, loc.lng], {
+                color: loc.active ? '#10b981' : '#9ca3af',
+                fillColor: loc.active ? '#10b981' : '#9ca3af',
+                fillOpacity: 0.2,
+                radius: loc.radius
+            }).addTo(map);
+        }
+    });
+
+    // Modal map - initialize when modal is shown
+    let modalMap = null;
+    let modalMarker = null;
+
+    document.getElementById('addLocationModal').addEventListener('shown.bs.modal', function() {
+        setTimeout(function() {
+            if (modalMap) {
+                modalMap.invalidateSize();
+                return;
+            }
+
+            modalMap = L.map('modalMap').setView([defaultLat, defaultLng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(modalMap);
+
+            modalMap.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+
+                document.getElementById('latitudeInput').value = lat;
+                document.getElementById('longitudeInput').value = lng;
+                document.getElementById('selectedCoords').innerHTML =
+                    '<i class="bi bi-geo-alt-fill text-primary me-1"></i>' + lat + ', ' + lng;
+
+                if (modalMarker) {
+                    modalMap.removeLayer(modalMarker);
+                }
+                modalMarker = L.marker([lat, lng]).addTo(modalMap);
+            });
+        }, 500);
+    });
 });
 </script>
 @endpush
