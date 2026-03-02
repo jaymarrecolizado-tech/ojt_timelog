@@ -19,17 +19,17 @@
         }
         .header {
             text-align: center;
-            margin-bottom: 8px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #2d3748;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #2d3748;
         }
         .header h1 {
-            font-size: 16px;
-            margin: 0 0 4px 0;
+            font-size: 18px;
+            margin: 0 0 5px 0;
             text-transform: uppercase;
             font-weight: bold;
             color: #1a202c;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
         .header p {
             color: #718096;
@@ -39,190 +39,181 @@
         .summary {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin: 8px 0 10px 0;
+            gap: 12px;
+            margin: 10px 0 12px 0;
         }
         .summary-card {
             flex: 1;
             text-align: center;
-            padding: 10px 8px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            min-width: 80px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 10px;
+            background-color: #f7fafc;
+            min-width: 90px;
             position: relative;
-            overflow: hidden;
         }
-        .summary-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
+        .summary-card.blue {
+            background-color: #ebf8ff;
+            border-color: #4299e1;
         }
-        .summary-card.blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .summary-card.blue::before { background: #3182ce; }
-        .summary-card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .summary-card.green::before { background: #38a169; }
-        .summary-card.purple { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
-        .summary-card.purple::before { background: #805ad5; }
-        .summary-card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .summary-card.orange::before { background: #dd6b20; }
-        .summary-card.red { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-        .summary-card.red::before { background: #e53e3e; }
-
-        .summary-card .card-inner {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 4px;
-            padding: 8px;
-            position: relative;
-            z-index: 1;
+        .summary-card.green {
+            background-color: #f0fff4;
+            border-color: #48bb78;
         }
-        .summary-card .number {
-            font-size: 20px;
+        .summary-card.purple {
+            background-color: #faf5ff;
+            border-color: #9f7aea;
+        }
+        .summary-card.orange {
+            background-color: #fffaf0;
+            border-color: #ed8936;
+        }
+        .summary-card.red {
+            background-color: #fff5f5;
+            border-color: #f56565;
+        }
+        .summary-card .card-header {
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             font-weight: bold;
-            color: #1a365d;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+        .summary-card.blue .card-header { color: #2b6cb0; }
+        .summary-card.green .card-header { color: #276749; }
+        .summary-card.purple .card-header { color: #6b46c1; }
+        .summary-card.orange .card-header { color: #c05621; }
+        .summary-card.red .card-header { color: #c53030; }
+        .summary-card .number {
+            font-size: 24px;
+            font-weight: bold;
             line-height: 1;
             display: block;
         }
-        .summary-card .label {
-            font-size: 7px;
-            color: #4a5568;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-            display: block;
-            margin-top: 3px;
-        }
+        .summary-card.blue .number { color: #2c5282; }
+        .summary-card.green .number { color: #22543d; }
+        .summary-card.purple .number { color: #553c9a; }
+        .summary-card.orange .number { color: #9c4221; }
+        .summary-card.red .number { color: #9b2c2c; }
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 8px;
+            margin-top: 5px;
         }
         th, td {
             border: 1px solid #2d3748;
-            padding: 5px 4px;
+            padding: 6px 5px;
             text-align: left;
             vertical-align: middle;
         }
         th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #2d3748;
             color: white;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 6px;
+            font-size: 7px;
             letter-spacing: 0.5px;
         }
         tr:nth-child(even) {
             background-color: #f7fafc;
         }
-        tr:hover {
-            background-color: #edf2f7;
-        }
-        .col-id { width: 25px; text-align: center; }
-        .col-student-id { width: 60px; }
-        .col-name { width: 110px; }
-        .col-dept { width: 90px; }
-        .col-days { width: 30px; text-align: center; }
-        .col-hours { width: 40px; text-align: center; }
-        .col-required { width: 35px; text-align: center; }
-        .col-remaining { width: 40px; text-align: center; }
-        .col-progress { width: 90px; }
-        .col-est { width: 65px; }
-        .col-status { width: 55px; text-align: center; }
+        .col-id { width: 30px; text-align: center; }
+        .col-student-id { width: 65px; }
+        .col-name { width: 115px; }
+        .col-dept { width: 95px; }
+        .col-days { width: 35px; text-align: center; }
+        .col-hours { width: 45px; text-align: center; }
+        .col-required { width: 40px; text-align: center; }
+        .col-remaining { width: 45px; text-align: center; }
+        .col-progress { width: 100px; }
+        .col-est { width: 70px; }
+        .col-status { width: 60px; text-align: center; }
 
         .progress-container {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
         }
         .progress-bar-bg {
             background-color: #e2e8f0;
-            height: 10px;
-            border-radius: 5px;
+            height: 12px;
+            border-radius: 6px;
             flex: 1;
-            min-width: 35px;
-            overflow: hidden;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+            min-width: 40px;
+            border: 1px solid #cbd5e0;
         }
         .progress-bar-fill {
             height: 100%;
             border-radius: 5px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        .progress-fill.low {
-            background: linear-gradient(90deg, #fc8181 0%, #e53e3e 100%);
-        }
-        .progress-fill.medium {
-            background: linear-gradient(90deg, #f6ad55 0%, #dd6b20 100%);
-        }
-        .progress-fill.high {
-            background: linear-gradient(90deg, #68d391 0%, #38a169 100%);
-        }
-        .progress-fill.complete {
-            background: linear-gradient(90deg, #63b3ed 0%, #3182ce 100%);
-        }
+        .progress-fill.low { background-color: #fc8181; }
+        .progress-fill.medium { background-color: #f6ad55; }
+        .progress-fill.high { background-color: #68d391; }
+        .progress-fill.complete { background-color: #4299e1; }
         .percentage-text {
             font-weight: bold;
-            font-size: 7px;
-            min-width: 30px;
+            font-size: 8px;
+            min-width: 32px;
             text-align: right;
         }
         .status-badge {
             display: inline-block;
-            padding: 3px 6px;
+            padding: 4px 8px;
             border-radius: 4px;
-            font-size: 6px;
+            font-size: 7px;
             font-weight: bold;
             text-transform: uppercase;
         }
         .status-active {
-            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            background-color: #c6f6d5;
             color: #22543d;
             border: 1px solid #9ae6b4;
         }
         .status-completed {
-            background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+            background-color: #bee3f8;
             color: #2a4365;
             border: 1px solid #90cdf4;
         }
         .status-inactive {
-            background: linear-gradient(135deg, #fed7d7 0%, #fc8181 100%);
+            background-color: #fed7d7;
             color: #742a2a;
             border: 1px solid #fc8181;
         }
         .status-pending {
-            background: linear-gradient(135deg, #fefcbf 0%, #fbd38d 100%);
+            background-color: #fefcbf;
             color: #744210;
             border: 1px solid #fbd38d;
         }
         .footer {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px solid #e2e8f0;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 2px solid #e2e8f0;
             text-align: center;
-            font-size: 7px;
+            font-size: 8px;
             color: #718096;
         }
         .legend {
-            margin-top: 6px;
-            padding: 6px 10px;
-            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            margin-top: 8px;
+            padding: 8px 12px;
+            background-color: #f7fafc;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
             font-size: 7px;
         }
         .legend span {
             display: inline-block;
-            margin-right: 12px;
+            margin-right: 15px;
         }
         .legend-color {
             display: inline-block;
-            width: 12px;
-            height: 10px;
-            margin-right: 3px;
+            width: 14px;
+            height: 12px;
+            margin-right: 4px;
             vertical-align: middle;
             border-radius: 3px;
+            border: 1px solid #cbd5e0;
         }
         .text-completed { color: #38a169; font-weight: bold; font-size: 8px; }
         .text-na { color: #a0aec0; font-size: 8px; }
@@ -234,7 +225,7 @@
         <p>As of {{ now()->format('F d, Y') }} | Generated: {{ now()->format('F d, Y h:i A') }}</p>
     </div>
 
-    {{-- Summary Section - Card Style --}}
+    {{-- Summary Section - Card Style with Solid Colors --}}
     @php
         $totalStudents = $students->count();
         $activeStudents = $students->where('status', 'active')->count();
@@ -245,34 +236,24 @@
 
     <div class="summary">
         <div class="summary-card blue">
-            <div class="card-inner">
-                <span class="number">{{ $totalStudents }}</span>
-                <span class="label">Total Students</span>
-            </div>
+            <div class="card-header">Total Students</div>
+            <span class="number">{{ $totalStudents }}</span>
         </div>
         <div class="summary-card green">
-            <div class="card-inner">
-                <span class="number">{{ $activeStudents }}</span>
-                <span class="label">Active</span>
-            </div>
+            <div class="card-header">Active</div>
+            <span class="number">{{ $activeStudents }}</span>
         </div>
         <div class="summary-card purple">
-            <div class="card-inner">
-                <span class="number">{{ $completedStudents }}</span>
-                <span class="label">Completed</span>
-            </div>
+            <div class="card-header">Completed</div>
+            <span class="number">{{ $completedStudents }}</span>
         </div>
         <div class="summary-card orange">
-            <div class="card-inner">
-                <span class="number">{{ number_format($totalHoursCompleted) }}</span>
-                <span class="label">Total Hours</span>
-            </div>
+            <div class="card-header">Total Hours</div>
+            <span class="number">{{ number_format($totalHoursCompleted) }}</span>
         </div>
         <div class="summary-card red">
-            <div class="card-inner">
-                <span class="number">{{ number_format($avgPercentage, 1) }}%</span>
-                <span class="label">Avg Progress</span>
-            </div>
+            <div class="card-header">Avg Progress</div>
+            <span class="number">{{ number_format($avgPercentage, 1) }}%</span>
         </div>
     </div>
 
@@ -342,10 +323,10 @@
     {{-- Legend --}}
     <div class="legend">
         <strong>Progress:</strong>
-        <span><span class="legend-color" style="background: linear-gradient(90deg, #fc8181 0%, #e53e3e 100%);"></span>&lt; 30%</span>
-        <span><span class="legend-color" style="background: linear-gradient(90deg, #f6ad55 0%, #dd6b20 100%);"></span>30-70%</span>
-        <span><span class="legend-color" style="background: linear-gradient(90deg, #68d391 0%, #38a169 100%);"></span>&gt; 70%</span>
-        <span><span class="legend-color" style="background: linear-gradient(90deg, #63b3ed 0%, #3182ce 100%);"></span>100%</span>
+        <span><span class="legend-color" style="background-color: #fc8181;"></span>&lt; 30%</span>
+        <span><span class="legend-color" style="background-color: #f6ad55;"></span>30-70%</span>
+        <span><span class="legend-color" style="background-color: #68d391;"></span>&gt; 70%</span>
+        <span><span class="legend-color" style="background-color: #4299e1;"></span>100%</span>
     </div>
 
     <div class="footer">
