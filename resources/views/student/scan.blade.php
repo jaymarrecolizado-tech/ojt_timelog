@@ -156,6 +156,14 @@
             </div>
 
             @if($nextType)
+                <!-- HTTPS Notice -->
+                @if(request()->getSchemeAndHttpHost() != 'http://localhost' && request()->getSchemeAndHttpHost() != 'http://127.0.0.1')
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        <strong>Note:</strong> Camera access requires HTTPS when accessing from a different device. Use manual QR entry below, or access from the same device hosting this app.
+                    </div>
+                @endif
+
                 <!-- Next Action Alert -->
                 <div class="status-card info mb-4">
                     <div class="d-flex align-items-center">
@@ -225,17 +233,23 @@
                 <div class="manual-entry-card">
                     <div class="card-header">
                         <h6 class="mb-0">
-                            <i class="bi bi-keyboard me-2"></i>Manual Entry
+                            <i class="bi bi-keyboard me-2"></i>Manual QR Entry (Works from any device)
                         </h6>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted small mb-3">If camera doesn't work, enter the QR code manually:</p>
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Camera not working?</strong> Camera access requires HTTPS. Enter the QR code manually as a workaround.
+                        </div>
                         <div class="input-group">
-                            <input type="text" id="manual-qr-code" class="form-control form-control-lg" placeholder="Enter QR code here">
+                            <input type="text" id="manual-qr-code" class="form-control form-control-lg" placeholder="Enter QR code from the guard" autofocus>
                             <button class="btn btn-success" type="button" id="submit-manual-qr">
                                 <i class="bi bi-check-lg me-1"></i> Submit
                             </button>
                         </div>
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="bi bi-lightbulb me-1"></i> Ask the guard to show you the QR code, then enter it above.
+                        </p>
                     </div>
                 </div>
             @else
@@ -313,7 +327,12 @@
         } catch (err) {
             console.error('Error starting camera:', err);
             statusDiv.className = 'status-card danger';
-            statusDiv.innerHTML = '<i class="bi bi-camera-video-off me-2"></i>Error accessing camera. Please allow camera permissions.';
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!isLocalhost && window.location.protocol === 'http:') {
+                statusDiv.innerHTML = '<i class="bi bi-shield-lock me-2"></i><strong>HTTPS Required</strong><br><small class="text-muted">Camera access requires HTTPS. Please use the manual entry below or access from the same device hosting the app.</small>';
+            } else {
+                statusDiv.innerHTML = '<i class="bi bi-camera-video-off me-2"></i><strong>Camera Access Error</strong><br><small class="text-muted">Please allow camera permissions and try again.</small>';
+            }
         }
     });
 
