@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+node_modules
+deployment
+.vscode
+.idea
+*.log
+.env.example
+.env.local
+.env.backup
+storage\logs\*
+storage\framework\cache\*
+storage\framework\sessions\*
+storage\framework\testing\*
+storage\framework\views\*
+storage\app\public\*

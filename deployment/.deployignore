@@ -1,0 +1,52 @@
+# Deployment-specific files to exclude
+.git
+.gitignore
+README.md
+node_modules/
+vendor/
+deployment/
+
+# Environment files
+.env.example
+.env.local
+.env.testing
+.env.backup
+
+# Development files
+storage/logs/*
+storage/debugbar/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/app/public/*
+!storage/app/public/.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test files
+tests/
+phpunit.xml
+phpunit.xml.backup
+
+# Documentation
+docs/
+*.md
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Composer files (will be installed on server)
+composer.lock

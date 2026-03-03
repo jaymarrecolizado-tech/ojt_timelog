@@ -1,0 +1,76 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+
+    # Security Headers
+    <IfModule mod_headers.c>
+        # Prevent clickjacking
+        Header set X-Frame-Options "SAMEORIGIN"
+
+        # Prevent MIME type sniffing
+        Header set X-Content-Type-Options "nosniff"
+
+        # Enable XSS protection
+        Header set X-XSS-Protection "1; mode=block"
+
+        # Referrer Policy
+        Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+        # Permissions Policy
+        Header set Permissions-Policy "geolocation=(), microphone=(), camera=(self)"
+    </IfModule>
+</IfModule>
+
+# Prevent Directory Browsing
+Options -Indexes
+
+# Block access to sensitive files
+<FilesMatch "^\.env|\.git|composer\.json|composer\.lock|package\.json|package-lock\.json">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to storage and vendor directories
+<IfModule mod_rewrite.c>
+    RewriteRule ^(storage|vendor)/ - [F,L]
+</IfModule>
+
+# Enable GZIP Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>
+
+# Set Cache Headers for Static Assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# PHP Settings
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_value error_reporting E_ALL & ~E_DEPRECATED & ~E_STRICT
+</IfModule>
+
+# Increase upload limits for file uploads
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
