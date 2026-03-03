@@ -331,7 +331,20 @@
             if (!isLocalhost && window.location.protocol === 'http:') {
                 statusDiv.innerHTML = '<i class="bi bi-shield-lock me-2"></i><strong>HTTPS Required</strong><br><small class="text-muted">Camera access requires HTTPS. Please use the manual entry below or access from the same device hosting the app.</small>';
             } else {
-                statusDiv.innerHTML = '<i class="bi bi-camera-video-off me-2"></i><strong>Camera Access Error</strong><br><small class="text-muted">Please allow camera permissions and try again.</small>';
+                const errorMsg = err.message || err.toString();
+                let helpText = 'Please allow camera permissions and try again.';
+                if (errorMsg.includes('NotAllowedError') || errorMsg.includes('Permission denied')) {
+                    helpText = 'Camera permission denied. Please allow camera access in your browser settings and refresh.';
+                } else if (errorMsg.includes('NotFoundError') || errorMsg.includes('no camera')) {
+                    helpText = 'No camera detected. Please check if your device has a camera and it\'s connected.';
+                } else if (errorMsg.includes('NotReadableError') || errorMsg.includes('could not be started')) {
+                    helpText = 'Camera is being used by another application. Please close other apps using the camera.';
+                } else if (errorMsg.includes('NotSupportedError')) {
+                    helpText = 'Your browser doesn\'t support camera access. Please try a different browser.';
+                } else if (errorMsg.includes('OverconstrainedError') || errorMsg.includes('constraints')) {
+                    helpText = 'Camera requirements not met. Your device may not have a compatible camera.';
+                }
+                statusDiv.innerHTML = '<i class="bi bi-camera-video-off me-2"></i><strong>Camera Access Error</strong><br><small class="text-muted">' + helpText + '</small>';
             }
         }
     });
