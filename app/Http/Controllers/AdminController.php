@@ -103,7 +103,7 @@ class AdminController extends Controller
             ->whereNotNull('longitude')
             ->get();
 
-        $locationsData = $activeLocations->map(function($l) {
+        $locationsData = $activeLocations->map(function ($l) {
             return [
                 'name' => $l->name,
                 'lat' => (float) number_format($l->latitude, 6),
@@ -129,10 +129,10 @@ class AdminController extends Controller
 
         if ($request->has('search') && $request->input('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%$search%")
-                  ->orWhere('last_name', 'like', "%$search%")
-                  ->orWhere('student_id_no', 'like', "%$search%");
+                    ->orWhere('last_name', 'like', "%$search%")
+                    ->orWhere('student_id_no', 'like', "%$search%");
             });
         }
 
@@ -188,7 +188,7 @@ class AdminController extends Controller
         $student = Student::findOrFail($id);
 
         $month = $request->input('month', now()->format('Y-m'));
-        
+
         $monthStart = Carbon::createFromFormat('Y-m', $month)->startOfMonth()->toDateString();
         $monthEnd = Carbon::createFromFormat('Y-m', $month)->endOfMonth()->toDateString();
 
@@ -208,7 +208,7 @@ class AdminController extends Controller
     public function updateStudent(Request $request, $id)
     {
         $student = Student::findOrFail($id);
-        
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
@@ -450,9 +450,11 @@ class AdminController extends Controller
     private function generateProgressReport()
     {
         // Load ALL time logs for each student, not just current month
-        $students = Student::with(['timeLogs' => function($q) {
-            $q->orderBy('date');
-        }])->get();
+        $students = Student::with([
+            'timeLogs' => function ($q) {
+                $q->orderBy('date');
+            }
+        ])->get();
 
         // Calculate progress metrics for each student
         foreach ($students as $student) {
@@ -518,7 +520,7 @@ class AdminController extends Controller
             ->where('log_type', 'IN')
             ->where('log_category', 'AM')
             ->get()
-            ->filter(function($log) use ($today, $scheduleStart, $graceMinutes) {
+            ->filter(function ($log) use ($today, $scheduleStart, $graceMinutes) {
                 $scheduledTime = Carbon::parse("$today $scheduleStart");
                 $graceEnd = $scheduledTime->copy()->addMinutes($graceMinutes);
                 return $log->timestamp > $graceEnd;
@@ -590,10 +592,10 @@ class AdminController extends Controller
     public function locations()
     {
         $locations = Location::paginate(AppConstants::PAGINATION_LOCATIONS);
-        
-        $activeLocations = $locations->filter(function($l) {
+
+        $activeLocations = $locations->filter(function ($l) {
             return $l->latitude && $l->longitude && $l->is_active;
-        })->map(function($l) {
+        })->map(function ($l) {
             return [
                 'name' => $l->name,
                 'lat' => (float) number_format($l->latitude, 6),
@@ -610,15 +612,16 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'description' => 'nullable|string|max:300',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'radius_meters' => 'nullable|integer|min:10|max:1000',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'radius_meters' => 'nullable|integer|min:10|max:5000',
+            'is_active' => 'nullable|boolean',
         ]);
 
         Location::create([
             'id' => Str::uuid(),
             'secret_key' => Str::random(64),
-            'is_active' => true,
+            'is_active' => $request->boolean('is_active', true),
             ...$validated,
         ]);
 
@@ -668,14 +671,15 @@ class AdminController extends Controller
             'time' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/'],
             'log_type' => 'required|in:IN,OUT',
             'log_category' => 'required|in:AM,PM',
+            'location_id' => 'nullable|exists:locations,id',
             'reason' => 'required|string|max:500|not_regex:/[<>]/',
         ], [
             'time.regex' => 'Time must be in HH:MM format (24-hour format).',
             'reason.not_regex' => 'Reason cannot contain HTML tags for security reasons.',
+            'location_id.exists' => 'Selected location does not exist.',
         ]);
 
         $student = Student::findOrFail($studentId);
-
         $timestamp = Carbon::parse($validated['date'] . ' ' . $validated['time']);
 
         $timeLog = TimeLog::create([
@@ -685,6 +689,7 @@ class AdminController extends Controller
             'log_category' => $validated['log_category'],
             'timestamp' => $timestamp,
             'date' => $validated['date'],
+            'location_id' => $validated['location_id'] ?? null,
             'is_manual' => true,
             'is_flagged' => false,
         ]);
@@ -699,6 +704,36 @@ class AdminController extends Controller
             'reason' => $validated['reason'],
         ]);
 
-        return back()->with('success', 'Manual time log added successfully');
+        // Preserve the month filter the admin had open
+        $month = $request->input('month', now()->format('Y-m'));
+        return redirect()
+            ->route('admin.students.detail', [$student->id, 'month' => $month])
+            ->with('success', 'Manual time log added for ' . Carbon::parse($validated['date'])->format('M d, Y'));
+    }
+
+    public function deleteLog(Request $request, $studentId, $logId)
+    {
+        $student = Student::findOrFail($studentId);
+        $log = TimeLog::where('id', $logId)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
+
+        // Record audit trail before deletion
+        LogOverride::create([
+            'id' => Str::uuid(),
+            'time_log_id' => $log->id,
+            'student_id' => $student->id,
+            'admin_id' => Auth::id(),
+            'action' => 'DELETE',
+            'old_values' => $log->toArray(),
+            'reason' => $request->input('reason', 'Deleted by admin'),
+        ]);
+
+        $log->delete();
+
+        $month = $request->input('month', now()->format('Y-m'));
+        return redirect()
+            ->route('admin.students.detail', [$student->id, 'month' => $month])
+            ->with('success', 'Log entry deleted successfully.');
     }
 }
