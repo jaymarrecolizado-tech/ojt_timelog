@@ -161,6 +161,40 @@
         </div>
     </div>
 
+    <!-- Location Map -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                            Active Scan Locations
+                        </h5>
+                        <a href="{{ route('admin.locations') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-gear me-1"></i>Manage
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if($activeLocations->count() > 0)
+                        <div id="dashboardMap" style="height: 400px; width: 100%; border-radius: 16px;"></div>
+                    @else
+                        <div class="text-center py-5">
+                            <div class="text-muted mb-3">
+                                <i class="bi bi-geo-alt" style="font-size: 3rem;"></i>
+                            </div>
+                            <p class="text-muted mb-3">No active scan locations configured</p>
+                            <a href="{{ route('admin.locations') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i>Add Location
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Links -->
     <div class="row g-4">
         <div class="col-md-6">
@@ -303,3 +337,57 @@
     }
 </style>
 @endsection
+
+@push('scripts')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    var locationsData = @json($locationsData);
+
+    function initDashboardMap() {
+        var defaultLat = 14.5995;
+        var defaultLng = 120.9842;
+
+        if (locationsData.length > 0) {
+            defaultLat = locationsData[0].lat;
+            defaultLng = locationsData[0].lng;
+        }
+
+        var mapEl = document.getElementById('dashboardMap');
+        if (!mapEl) return;
+
+        var map = L.map('dashboardMap').setView([defaultLat, defaultLng], locationsData.length ? 13 : 9);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        for (var i = 0; i < locationsData.length; i++) {
+            var loc = locationsData[i];
+            L.marker([loc.lat, loc.lng]).addTo(map)
+                .bindPopup('<strong>' + escapeHtml(loc.name) + '</strong><br>Radius: ' + loc.radius + 'm');
+            L.circle([loc.lat, loc.lng], {
+                color: '#10b981',
+                fillColor: '#10b981',
+                fillOpacity: 0.15,
+                radius: loc.radius
+            }).addTo(map);
+        }
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDashboardMap);
+    } else {
+        initDashboardMap();
+    }
+})();
+</script>
+@endpush

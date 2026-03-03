@@ -98,12 +98,28 @@ class AdminController extends Controller
             }
         }
 
+        $activeLocations = Location::where('is_active', true)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get();
+
+        $locationsData = $activeLocations->map(function($l) {
+            return [
+                'name' => $l->name,
+                'lat' => (float) number_format($l->latitude, 6),
+                'lng' => (float) number_format($l->longitude, 6),
+                'radius' => (int) $l->radius_meters
+            ];
+        })->values();
+
         return view('admin.dashboard', compact(
             'totalStudents',
             'presentToday',
             'absentToday',
             'lateCount',
-            'clockedIn'
+            'clockedIn',
+            'activeLocations',
+            'locationsData'
         ));
     }
 
@@ -574,7 +590,19 @@ class AdminController extends Controller
     public function locations()
     {
         $locations = Location::paginate(AppConstants::PAGINATION_LOCATIONS);
-        return view('admin.locations', compact('locations'));
+        
+        $activeLocations = $locations->filter(function($l) {
+            return $l->latitude && $l->longitude && $l->is_active;
+        })->map(function($l) {
+            return [
+                'name' => $l->name,
+                'lat' => (float) number_format($l->latitude, 6),
+                'lng' => (float) number_format($l->longitude, 6),
+                'radius' => (int) $l->radius_meters
+            ];
+        })->values();
+
+        return view('admin.locations', compact('locations', 'activeLocations'));
     }
 
     public function createLocation(Request $request)

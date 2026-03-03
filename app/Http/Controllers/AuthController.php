@@ -24,6 +24,7 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'remember' => 'nullable',
         ]);
 
         $user = User::where('email', $credentials['email'])->first();
@@ -36,7 +37,7 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'Account is deactivated']);
         }
 
-        Auth::login($user, true);
+        Auth::login($user, !empty($credentials['remember']));
 
         if ($user->isAdmin() || $user->isSuperAdmin()) {
             return redirect()->route('admin.dashboard');

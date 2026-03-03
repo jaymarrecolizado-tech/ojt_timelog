@@ -181,6 +181,82 @@
             color: #991b1b;
         }
 
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .credentials-card {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px dashed var(--primary);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .credentials-card h6 {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .credentials-card .credential-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+            font-size: 0.8rem;
+        }
+
+        .credentials-card .credential-item:last-child {
+            border-bottom: none;
+        }
+
+        .credentials-card .credential-label {
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .credentials-card .credential-value {
+            color: var(--gray-800);
+            font-family: monospace;
+            background: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-check-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid var(--gray-300);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            user-select: none;
+        }
+
         .form-label {
             font-weight: 600;
             color: var(--gray-700);
@@ -345,12 +421,40 @@
                     </div>
                 </div>
 
-                <div class="d-grid mt-5">
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember" value="1">
+                        <label class="form-check-label" for="remember">
+                            <i class="bi bi-check-circle me-1"></i> Remember me
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
                     </button>
                 </div>
             </form>
+
+            <div class="alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Sample Credentials:</strong>
+                <div class="credentials-card">
+                    <div class="credential-item">
+                        <span class="credential-label">Super Admin:</span>
+                        <span class="credential-value">admin@timelog.com / Adm1n@TLMS2026!</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label">Guard:</span>
+                        <span class="credential-value">GUARD-001@guard.timelog.com / Gu4rd@TLMS2026!</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label">Student:</span>
+                        <span class="credential-value">2024-001@student.timelog.com / StuD3nt@TLMS2026!</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="auth-footer">
                 <p>Don't have an account? <a href="{{ route('register') }}">Create one here</a></p>
