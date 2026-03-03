@@ -12,6 +12,18 @@
                     <canvas id="qrcode"></canvas>
                 </div>
 
+                <!-- QR Code Text Display for Manual Entry -->
+                <div class="alert alert-info mb-3">
+                    <h6 class="alert-heading"><i class="bi bi-keyboard me-2"></i>Manual Entry Code</h6>
+                    <p class="mb-2 small text-muted">For students whose camera doesn't work, copy this code:</p>
+                    <div class="input-group">
+                        <input type="text" id="qr-code-text" class="form-control text-center font-monospace" readonly>
+                        <button class="btn btn-primary" onclick="copyQrCode()" type="button">
+                            <i class="bi bi-clipboard me-1"></i> Copy
+                        </button>
+                    </div>
+                </div>
+
                 <div class="timer-display mb-3" id="timer">
                     Refreshing in 30s
                 </div>
@@ -24,7 +36,7 @@
 
                 <p class="text-muted mb-0">
                     <i class="bi bi-info-circle me-1"></i>
-                    Students should scan with their mobile app to record attendance
+                    Students should scan with their mobile app to record attendance. If camera doesn't work, use manual entry code above.
                 </p>
             </div>
         </div>
@@ -76,6 +88,28 @@
         }
     }
 
+    function copyQrCode() {
+        const qrInput = document.getElementById('qr-code-text');
+        qrInput.select();
+        qrInput.setSelectionRange(0, 99999);
+
+        navigator.clipboard.writeText(qrInput.value).then(() => {
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check me-1"></i> Copied!';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-success');
+
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
+    }
+
     function refreshQR() {
         fetch('/guard/qr/refresh')
             .then(response => response.json())
@@ -87,6 +121,10 @@
                         timestamp: Date.now()
                     });
                     generateQR(qrData);
+
+                    // Update the manual entry text field
+                    document.getElementById('qr-code-text').value = qrData;
+
                     countdown = 30;
                     updateTimer();
                 } else if (data.error) {
